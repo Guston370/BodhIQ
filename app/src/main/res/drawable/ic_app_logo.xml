@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    
+    <!-- App Logo Placeholder - Replace with your actual logo -->
+    <group android:scaleX="0.8" android:scaleY="0.8" android:pivotX="60" android:pivotY="60">
+        <!-- Background Circle -->
+        <path
+            android:fillColor="#2196F3"
+            android:pathData="M60,60m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
+        
+        <!-- Inner Icon -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40,35h40v10H40z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40,55h30v10H40z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40,75h35v10H40z" />
+    </group>
+</vector>

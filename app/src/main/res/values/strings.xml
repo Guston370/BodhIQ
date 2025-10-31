@@ -1,0 +1,203 @@
+<resources>
+    <string name="app_name">BodhIQ</string>
+    
+    <!-- Login Activity Strings -->
+    <string name="app_logo">BodhIQ Logo</string>
+    <string name="login_subtitle">Pharmaceutical Research Analysis Platform</string>
+    <string name="login_title">Sign In</string>
+    <string name="email_hint">Email Address</string>
+    <string name="login_button">Sign In</string>
+    <string name="demo_credentials_title">Demo Credentials:</string>
+    <string name="demo_credentials_admin">Admin: pharma.strategist@company.com</string>
+    <string name="demo_credentials_analyst">Analyst: analyst@company.com</string>
+    
+    <!-- Google Sign-In Strings -->
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="login_welcome_message">Welcome\nYour medical health companion</string>
+    <string name="login_footer_text">By signing in, you agree to our Terms of Service and Privacy Policy</string>
+    
+    <!-- Web Client ID - Replace with your actual Web Client ID from Firebase Console -->
+    <string name="default_web_client_id">924987207747-atf448k8sitbg4o6k9mipe2kdn3pmhkd.apps.googleusercontent.com</string>
+    
+    <!-- Gemini API Key -->
+    <string name="gemini_api_key">AIzaSyAFzcUAFRk-sHWOlOnUkrJppIr3cRzN4J0</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_email">Please enter a valid email address</string>
+    <string name="error_empty_email">Email address is required</string>
+    <string name="error_authentication_failed">Authentication failed. Please check your credentials.</string>
+    <string name="error_network">Network error. Please try again.</string>
+    <string name="error_unknown">An unexpected error occurred. Please try again.</string>
+    
+    <!-- Loading States -->
+    <string name="signing_in">Signing In...</string>
+    
+    <!-- Dashboard Activity Strings -->
+    <string name="dashboard_title">BodhIQ Dashboard</string>
+    <string name="welcome_message">Welcome back!</string>
+    <string name="statistics_title">System Statistics</string>
+    <string name="total_queries">Total Queries</string>
+    <string name="completed_queries">Completed</string>
+    <string name="success_rate">Success Rate</string>
+    <string name="processing_queries">Processing</string>
+    <string name="recent_queries_title">Recent Queries</string>
+    <string name="view_all">View All</string>
+    <string name="no_recent_queries">No recent queries</string>
+    <string name="start_first_query">Start your first pharmaceutical analysis</string>
+    <string name="new_query">New Query</string>
+    <string name="no_queries_icon">No queries icon</string>
+    <string name="view_query_details">View query details</string>
+    <string name="refresh_dashboard">Refresh Dashboard</string>
+    <string name="logout">Logout</string>
+    
+    <!-- Menu Items -->
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_logout">Logout</string>
+    <string name="menu_reports">Reports</string>
+    
+    <!-- Format Strings -->
+    <string name="user_role_format">%1$s • %2$s</string>
+    <string name="percentage_format">%d%%</string>
+    
+    <!-- Navigation Strings -->
+    <string name="nav_home">Home</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_profile">Profile</string>
+    
+    <!-- Reports Section Strings -->
+    <string name="reports_title">Medical Reports</string>
+    <string name="scan_report">Scan Report</string>
+    <string name="upload_report">Upload Report</string>
+    <string name="reports_history">History</string>
+    <string name="scanning_tips">📸 Scanning Tips</string>
+    <string name="upload_guidelines">📋 Upload Guidelines</string>
+    <string name="health_values_detected">🩺 Detected Health Values</string>
+    <string name="extracted_text">📄 Extracted Text</string>
+    <string name="health_analysis">💡 Health Analysis</string>
+    <string name="original_image">📷 Original Image</string>
+    
+    <!-- Camera and Upload Strings -->
+    <string name="camera_permission_required">Camera permission is required</string>
+    <string name="capture_photo">Capture photo</string>
+    <string name="open_gallery">Open gallery</string>
+    <string name="toggle_flash">Toggle flash</string>
+    <string name="flash_on">Flash On</string>
+    <string name="flash_off">Flash Off</string>
+    <string name="select_medical_report">Select Medical Report</string>
+    <string name="image_selected">Image Selected</string>
+    <string name="ready_to_process">Ready to process</string>
+    <string name="select_image_first">Please select an image first</string>
+    
+    <!-- Processing Messages -->
+    <string name="capturing_image">Capturing image...</string>
+    <string name="extracting_text">Extracting text...</string>
+    <string name="processing_image">Processing image...</string>
+    <string name="saving_report">Saving report...</string>
+    <string name="loading_reports">Loading reports...</string>
+    <string name="loading_report">Loading report...</string>
+    
+    <!-- Error Messages -->
+    <string name="photo_capture_failed">Photo capture failed</string>
+    <string name="text_extraction_failed">Text extraction failed</string>
+    <string name="no_text_found">No text found in image. Please ensure the image is clear and contains readable text.</string>
+    <string name="failed_to_save_report">Failed to save report</string>
+    <string name="failed_to_load_reports">Failed to load reports</string>
+    <string name="failed_to_load_report">Failed to load report</string>
+    <string name="invalid_report_id">Invalid report ID</string>
+    <string name="no_text_to_save">No text to save</string>
+    
+    <!-- Success Messages -->
+    <string name="report_saved_successfully">Report saved successfully</string>
+    <string name="text_copied_to_clipboard">Text copied to clipboard</string>
+    
+    <!-- Report Details -->
+    <string name="report_title_hint">Report Title</string>
+    <string name="enter_report_title">Please enter a report title</string>
+    <string name="copy_text">Copy</string>
+    <string name="save_report">Save Report</string>
+    <string name="share_report">Share Report</string>
+    <string name="share_results">Share</string>
+    <string name="change_image">Change Image</string>
+    <string name="process_image">Process Image</string>
+    <string name="tap_to_view_full_size">Tap to view full size</string>
+    <string name="full_screen_image_viewer_coming_soon">Full-screen image viewer coming soon</string>
+    
+    <!-- History and Search -->
+    <string name="search_reports">Search reports...</string>
+    <string name="filter_reports">Filter reports</string>
+    <string name="no_reports_found">No Reports Found</string>
+    <string name="start_scanning_message">Start by scanning or uploading your first medical report to see it here</string>
+    <string name="scan_first_report">Scan Report</string>
+    <string name="filter_options_coming_soon">Filter options coming soon</string>
+    <string name="no_search_results">No search results found</string>
+    
+    <!-- Health Parameters -->
+    <string name="health_parameters_detected" formatted="false">%d health parameter%s detected</string>
+    <string name="normal_range_format">Normal: %s</string>
+    <string name="status_normal">NORMAL</string>
+    <string name="status_high">HIGH</string>
+    <string name="status_low">LOW</string>
+    <string name="status_unknown">UNKNOWN</string>
+    <string name="status_completed">COMPLETED</string>
+    <string name="status_processing">PROCESSING</string>
+    <string name="status_failed">FAILED</string>
+    
+    <!-- Menu Actions -->
+    <string name="edit_report">Edit Report</string>
+    <string name="delete_report">Delete Report</string>
+    <string name="delete_functionality_coming_soon">Delete functionality coming soon</string>
+    <string name="edit_functionality_coming_soon">Edit functionality coming soon</string>
+    
+    <!-- Date Formats -->
+    <string name="report_date_format">MMM dd, yyyy • HH:mm</string>
+    <string name="report_detail_date_format">EEEE, MMMM dd, yyyy \'at\' HH:mm</string>
+    <string name="default_report_title_format">Medical Report - %s</string>
+    
+    <!-- Sharing -->
+    <string name="share_report_results">Share Report Results</string>
+    <string name="medical_report_results">Medical Report Results</string>
+    
+    <!-- Sign Up Activity Strings -->
+    <string name="create_account_title">Create Account</string>
+    <string name="create_account_subtitle">Join BodhIQ to start your health journey</string>
+    <string name="full_name_hint">Full Name (Optional)</string>
+    <string name="password_hint">Password</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="create_account_button">Create Account</string>
+    <string name="already_have_account">Already have an account? Log in</string>
+    <string name="signup_footer_text">By creating an account, you agree to our Terms of Service and Privacy Policy</string>
+    
+    <!-- Forgot Password Activity Strings -->
+    <string name="forgot_password_title">Reset Password</string>
+    <string name="forgot_password_subtitle">Enter your email address and we\'ll send you a link to reset your password</string>
+    <string name="send_reset_link_button">Send Reset Link</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="message_icon">Message icon</string>
+    
+    <!-- Validation Messages -->
+    <string name="error_empty_name">Please enter your full name</string>
+    <string name="error_empty_password">Please enter a password</string>
+    <string name="error_weak_password">Password must be at least 6 characters</string>
+    <string name="error_passwords_dont_match">Passwords don\'t match</string>
+    <string name="error_email_already_exists">An account with this email already exists</string>
+    <string name="error_weak_password_firebase">Password should be at least 6 characters</string>
+    
+    <!-- Success Messages -->
+    <string name="account_created_successfully">Account created successfully!</string>
+    <string name="password_reset_sent">Password reset link sent to your email</string>
+    <string name="check_email_for_reset">Please check your email for the password reset link</string>
+    
+    <!-- Login Activity Updates -->
+    <string name="sign_up_text">Don\'t have an account? Sign up</string>
+    <string name="forgot_password_text">Forgot Password?</string>
+    <string name="or_divider">OR</string>
+    <string name="sign_in_with_email">Sign in with Email</string>
+    
+    <!-- Dark Mode Strings -->
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_follow_system">Follow system setting</string>
+    <string name="dark_mode_enabled">Dark mode enabled</string>
+    <string name="dark_mode_disabled">Light mode enabled</string>
+    <string name="dark_mode_system">Following system setting</string>
+</resources>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "924987207747",
+    "project_id": "bodhiq-ea0eb",
+    "storage_bucket": "bodhiq-ea0eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:924987207747:android:48aae89e24b30eeb9da4f6",
+        "android_client_info": {
+          "package_name": "com.mit.bodhiq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "924987207747-atf448k8sitbg4o6k9mipe2kdn3pmhkd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqDt9ptwa2mFXB4ai-Kfh2uk-bqkmpFtA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "924987207747-atf448k8sitbg4o6k9mipe2kdn3pmhkd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
