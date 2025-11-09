@@ -26,8 +26,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         
         super.onCreate(savedInstanceState);
         
-        // Configure status bar for current theme
-        StatusBarUtils.configureStatusBar(this);
+        // Configure status bar with enhanced contrast and gesture navigation support
+        StatusBarUtils.configureForGestureNavigation(this);
     }
     
     @Override
@@ -59,8 +59,8 @@ public abstract class BaseActivity extends AppCompatActivity {
      * Called when theme changes. Override in subclasses to handle theme-specific updates
      */
     protected void onThemeChanged() {
-        // Update status bar for new theme
-        StatusBarUtils.configureStatusBar(this);
+        // Update status bar for new theme with enhanced configuration
+        StatusBarUtils.configureForGestureNavigation(this);
         
         // Subclasses can override to handle additional theme changes
     }

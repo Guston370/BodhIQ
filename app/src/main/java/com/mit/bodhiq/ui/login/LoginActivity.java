@@ -33,6 +33,7 @@ import com.mit.bodhiq.ui.login.ForgotPasswordActivity;
 
 import com.mit.bodhiq.utils.UserPreferences;
 import com.mit.bodhiq.utils.GoogleSignInDiagnostics;
+import com.mit.bodhiq.utils.LogoutManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -95,6 +96,9 @@ public class LoginActivity extends BaseActivity {
         
         // Setup UI listeners
         setupClickListeners();
+        
+        // Handle logout navigation or show initial state
+        handleNavigationIntent();
         
         // Initially show only Google Sign-In
         showGoogleSignInOnly();
@@ -172,6 +176,66 @@ public class LoginActivity extends BaseActivity {
             redirectToMainActivity();
         }
     }
+    
+    /**
+     * Handle navigation intent to determine if this is a logout navigation
+     */
+    private void handleNavigationIntent() {
+        Intent intent = getIntent();
+        if (LogoutManager.isLogoutNavigation(intent)) {
+            Log.d(TAG, "LoginActivity opened after logout - ensuring complete login interface");
+            
+            // Ensure we show the complete login interface
+            // This prevents any cached state from showing incomplete UI
+            showCompleteLoginInterface();
+            
+            // Clear any cached authentication state
+            clearAuthenticationCache();
+            
+            // Show a subtle message that logout was successful (optional)
+            Toast.makeText(this, "You have been logged out", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Show the complete login interface with all options
+     */
+    private void showCompleteLoginInterface() {
+        // Ensure all login options are visible and properly configured
+        binding.btnGoogleSignIn.setVisibility(View.VISIBLE);
+        binding.btnEmailSignInToggle.setVisibility(View.VISIBLE);
+        binding.tvSignUp.setVisibility(View.VISIBLE);
+        
+        // Reset to default state (Google Sign-In only initially)
+        showGoogleSignInOnly();
+        
+        Log.d(TAG, "Complete login interface displayed");
+    }
+    
+    /**
+     * Clear any cached authentication state
+     */
+    private void clearAuthenticationCache() {
+        try {
+            // Clear any form data
+            if (binding.etEmail != null) {
+                binding.etEmail.setText("");
+            }
+            if (binding.etPassword != null) {
+                binding.etPassword.setText("");
+            }
+            
+            // Clear any error states
+            clearErrors();
+            
+            // Hide progress bar if showing
+            hideProgressBar();
+            
+            Log.d(TAG, "Authentication cache cleared");
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing authentication cache", e);
+        }
+    }
 
     /**
      * Setup click listeners for UI components
@@ -181,7 +245,8 @@ public class LoginActivity extends BaseActivity {
         binding.btnEmailSignIn.setOnClickListener(v -> attemptEmailSignIn());
         binding.tvSignUp.setOnClickListener(v -> navigateToSignUp());
         binding.tvForgotPassword.setOnClickListener(v -> navigateToForgotPassword());
-        binding.tvEmailSignInToggle.setOnClickListener(v -> toggleEmailSignIn());
+        binding.btnEmailSignInToggle.setOnClickListener(v -> toggleEmailSignIn());
+        binding.btnBackToOptions.setOnClickListener(v -> showGoogleSignInOnly());
     }
 
     /**
@@ -452,34 +517,26 @@ public class LoginActivity extends BaseActivity {
      * Show only Google Sign-In option (default state)
      */
     private void showGoogleSignInOnly() {
-        binding.tilEmail.setVisibility(View.GONE);
-        binding.tilPassword.setVisibility(View.GONE);
-        binding.tvForgotPassword.setVisibility(View.GONE);
-        binding.btnEmailSignIn.setVisibility(View.GONE);
-        binding.tvOrDivider.setVisibility(View.GONE);
+        binding.llSigninOptions.setVisibility(View.VISIBLE);
+        binding.llEmailForm.setVisibility(View.GONE);
     }
 
     /**
      * Show email/password fields along with Google Sign-In
      */
     private void showEmailPasswordFields() {
-        binding.tilEmail.setVisibility(View.VISIBLE);
-        binding.tilPassword.setVisibility(View.VISIBLE);
-        binding.tvForgotPassword.setVisibility(View.VISIBLE);
-        binding.btnEmailSignIn.setVisibility(View.VISIBLE);
-        binding.tvOrDivider.setVisibility(View.VISIBLE);
-        binding.tvEmailSignInToggle.setText("Hide Email Sign In");
+        binding.llSigninOptions.setVisibility(View.GONE);
+        binding.llEmailForm.setVisibility(View.VISIBLE);
     }
 
     /**
      * Toggle between Google-only and Email+Google sign in modes
      */
     private void toggleEmailSignIn() {
-        if (binding.tilEmail.getVisibility() == View.GONE) {
+        if (binding.llEmailForm.getVisibility() == View.GONE) {
             showEmailPasswordFields();
         } else {
             showGoogleSignInOnly();
-            binding.tvEmailSignInToggle.setText(getString(R.string.sign_in_with_email));
         }
     }
 

@@ -85,9 +85,68 @@ public class AuthManager {
      */
     public void redirectToLogin() {
         Intent intent = new Intent(context, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        // Clear the entire task stack and create a new task
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
+                       Intent.FLAG_ACTIVITY_CLEAR_TASK | 
+                       Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        
+        // Ensure user cannot navigate back to protected screens
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        
         context.startActivity(intent);
-        Log.d(TAG, "Redirected to LoginActivity");
+        Log.d(TAG, "Redirected to LoginActivity with cleared task stack");
+    }
+    
+    /**
+     * Enhanced logout method that ensures complete session cleanup
+     */
+    public void performCompleteLogout(LogoutCallback callback) {
+        Log.d(TAG, "Starting complete logout process...");
+        
+        // Sign out from Google first
+        googleSignInClient.signOut()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "Google sign-out successful");
+                    } else {
+                        Log.w(TAG, "Google sign-out failed", task.getException());
+                    }
+                    
+                    // Revoke Google access to ensure complete logout
+                    googleSignInClient.revokeAccess()
+                            .addOnCompleteListener(revokeTask -> {
+                                Log.d(TAG, "Google access revoked");
+                                
+                                // Sign out from Firebase
+                                firebaseAuth.signOut();
+                                Log.d(TAG, "Firebase sign-out completed");
+                                
+                                // Clear all local user data
+                                clearAllUserData();
+                                
+                                // Callback to notify completion
+                                if (callback != null) {
+                                    callback.onLogoutComplete();
+                                }
+                            });
+                });
+    }
+    
+    /**
+     * Clear all user-related data from local storage
+     */
+    private void clearAllUserData() {
+        try {
+            // Clear user preferences
+            UserPreferences.clearUserData(context);
+            
+            // Clear any cached data (you can add more clearing logic here)
+            // For example: clear database, clear image cache, etc.
+            
+            Log.d(TAG, "All user data cleared successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing user data", e);
+        }
     }
     
     /**

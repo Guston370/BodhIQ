@@ -36,6 +36,10 @@
     <color name="surface_container_high">#252B2A</color>
     <color name="surface_container_highest">#303635</color>
     
+    <!-- Status Bar Colors - Dark Mode -->
+    <color name="status_bar_dark">#1A1F1E</color>
+    <color name="navigation_bar_dark">#171D1C</color>
+    
     <!-- Background Colors -->
     <color name="background">#0F1414</color>
     <color name="on_background">#E0E3E2</color>
@@ -69,6 +73,12 @@
     <color name="stat_card_purple">#CE93D8</color>
     <color name="stat_card_purple_container">#4A148C</color>
     
+    <!-- Google Sign-In Button Colors - Dark Mode -->
+    <color name="google_button_background">#2D2E30</color>
+    <color name="google_button_text">#E8EAED</color>
+    <color name="google_button_stroke">#5F6368</color>
+    <color name="google_button_ripple">#3C4043</color>
+
     <!-- Processing and Overlay -->
     <color name="processing_overlay">#CC000000</color>
     <color name="scrim">#000000</color>

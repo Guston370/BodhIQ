@@ -16,7 +16,7 @@ import com.mit.bodhiq.R;
 public class StatusBarUtils {
     
     /**
-     * Configure status bar for the current theme
+     * Configure status bar for the current theme with enhanced contrast
      */
     public static void configureStatusBar(Activity activity) {
         if (activity == null) return;
@@ -24,19 +24,25 @@ public class StatusBarUtils {
         Window window = activity.getWindow();
         if (window == null) return;
         
-        // Clear the FLAG_TRANSLUCENT_STATUS flag
+        // Clear translucent flags and enable system bar backgrounds
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        
-        // Add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         
-        // Set status bar color to surface color
-        int statusBarColor = ContextCompat.getColor(activity, R.color.surface);
-        window.setStatusBarColor(statusBarColor);
+        boolean isDarkMode = isDarkModeActive(activity);
         
-        // Set navigation bar color to surface color
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            int navigationBarColor = ContextCompat.getColor(activity, R.color.surface);
+        // Set status bar and navigation bar colors with proper contrast
+        if (isDarkMode) {
+            // Dark mode: Use slightly lighter colors for contrast
+            int statusBarColor = ContextCompat.getColor(activity, R.color.status_bar_dark);
+            int navigationBarColor = ContextCompat.getColor(activity, R.color.navigation_bar_dark);
+            window.setStatusBarColor(statusBarColor);
+            window.setNavigationBarColor(navigationBarColor);
+        } else {
+            // Light mode: Use slightly darker colors for contrast
+            int statusBarColor = ContextCompat.getColor(activity, R.color.status_bar_light);
+            int navigationBarColor = ContextCompat.getColor(activity, R.color.navigation_bar_light);
+            window.setStatusBarColor(statusBarColor);
             window.setNavigationBarColor(navigationBarColor);
         }
         
@@ -57,13 +63,13 @@ public class StatusBarUtils {
             int flags = decorView.getSystemUiVisibility();
             
             if (isDarkMode) {
-                // Dark mode: use light content (white icons/text)
+                // Dark mode: use light content (white/light gray icons and text)
                 flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
                 }
             } else {
-                // Light mode: use dark content (dark icons/text)
+                // Light mode: use dark content (dark icons and text)
                 flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
@@ -71,6 +77,43 @@ public class StatusBarUtils {
             }
             
             decorView.setSystemUiVisibility(flags);
+        }
+    }
+    
+    /**
+     * Configure status bar for edge-to-edge display with proper insets
+     */
+    public static void configureEdgeToEdge(Activity activity) {
+        if (activity == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
+        
+        Window window = activity.getWindow();
+        if (window == null) return;
+        
+        // Enable edge-to-edge
+        window.setDecorFitsSystemWindows(false);
+        
+        // Configure status bar
+        configureStatusBar(activity);
+    }
+    
+    /**
+     * Apply status bar configuration with gesture navigation support
+     */
+    public static void configureForGestureNavigation(Activity activity) {
+        if (activity == null) return;
+        
+        configureStatusBar(activity);
+        
+        // Additional configuration for gesture navigation
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Window window = activity.getWindow();
+            if (window != null) {
+                // Ensure proper contrast in gesture navigation mode
+                boolean isDarkMode = isDarkModeActive(activity);
+                if (isDarkMode) {
+                    window.setNavigationBarContrastEnforced(true);
+                }
+            }
         }
     }
     

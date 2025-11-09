@@ -18,6 +18,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.mit.bodhiq.utils.AuthManager;
+import com.mit.bodhiq.utils.LogoutManager;
 import com.mit.bodhiq.databinding.ActivityMainBinding;
 import com.mit.bodhiq.ui.fragments.ChatAgentFragment;
 import com.mit.bodhiq.ui.fragments.HomeFragment;
@@ -91,11 +92,24 @@ public class MainActivity extends BaseActivity {
         authStateListener = firebaseAuth -> {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user == null) {
-                // User signed out, redirect to login
-                Log.d("MainActivity", "User signed out, redirecting to login");
-                redirectToLogin();
+                // User signed out (could be manual logout or token expiration)
+                Log.w("MainActivity", "User authentication lost, handling automatic logout");
+                handleAutomaticLogout("Authentication state changed - user is null");
             }
         };
+    }
+    
+    /**
+     * Handle automatic logout scenarios (token expiration, etc.)
+     */
+    private void handleAutomaticLogout(String reason) {
+        Log.w("MainActivity", "Handling automatic logout: " + reason);
+        
+        // Use LogoutManager to handle automatic logout
+        LogoutManager.handleAutomaticLogout(this, reason);
+        
+        // Finish this activity to prevent back navigation
+        finish();
     }
 
     /**

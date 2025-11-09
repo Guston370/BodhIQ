@@ -41,6 +41,10 @@
     <color name="surface_container_high">#E8EBEA</color>
     <color name="surface_container_highest">#E2E5E4</color>
     
+    <!-- Status Bar Colors - Light Mode -->
+    <color name="status_bar_light">#F0F3F2</color>
+    <color name="navigation_bar_light">#F4F7F6</color>
+    
     <!-- Background Colors -->
     <color name="background">#FAFDFC</color>
     <color name="on_background">#191C1C</color>
@@ -85,6 +89,12 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     
+    <!-- Google Sign-In Button Colors - Light Mode -->
+    <color name="google_button_background">#FFFFFF</color>
+    <color name="google_button_text">#1F1F1F</color>
+    <color name="google_button_stroke">#DADCE0</color>
+    <color name="google_button_ripple">#F8F9FA</color>
+
     <!-- Legacy Color Names for Backward Compatibility -->
     <color name="primary_text">@color/text_primary</color>
     <color name="secondary_text">@color/text_secondary</color>

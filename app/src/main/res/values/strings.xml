@@ -200,4 +200,47 @@
     <string name="dark_mode_enabled">Dark mode enabled</string>
     <string name="dark_mode_disabled">Light mode enabled</string>
     <string name="dark_mode_system">Following system setting</string>
+    
+    <!-- Additional Login Strings -->
+    <string name="back_to_options">Back to Options</string>
+    
+    <!-- Chatbot Empathetic Response Strings -->
+    <string name="chatbot_understanding_prefix">I understand that %s can be concerning</string>
+    <string name="chatbot_empathy_acknowledgment">I hear you, and I can imagine how %s that must be</string>
+    <string name="chatbot_reassurance_common">This is actually quite common and %s</string>
+    <string name="chatbot_gentle_suggestion">Some gentle things you could try:</string>
+    <string name="chatbot_professional_guidance">It would be worth mentioning to your doctor if %s</string>
+    <string name="chatbot_follow_up_invitation">Can you tell me %s?</string>
+    <string name="chatbot_supportive_closing">I\'m here to help you understand this better</string>
+    
+    <!-- Severity-Based Response Templates -->
+    <string name="chatbot_low_severity_intro">%s is quite common and manageable with some gentle self-care</string>
+    <string name="chatbot_moderate_severity_intro">It\'s good that you\'re paying attention to %s. Most causes are very treatable once identified</string>
+    <string name="chatbot_high_severity_intro">I\'m glad you\'re taking %s seriously. It\'s important to have this evaluated by a medical professional</string>
+    <string name="chatbot_critical_severity_intro">I understand %s must be frightening. This needs immediate medical attention</string>
+    
+    <!-- Medical Disclaimers by Severity -->
+    <string name="chatbot_disclaimer_low">This information is for educational purposes. If symptoms persist or worsen, please consult a healthcare provider</string>
+    <string name="chatbot_disclaimer_moderate">This guidance is educational only. Please consult a healthcare provider for proper evaluation and treatment</string>
+    <string name="chatbot_disclaimer_high">This is educational information only. Please seek professional medical evaluation promptly</string>
+    <string name="chatbot_disclaimer_critical">This is not a substitute for emergency medical care. Please seek immediate professional medical attention</string>
+    
+    <!-- Empathetic Phrases -->
+    <string name="chatbot_validation_concern">It\'s completely natural to want to know what might be causing this</string>
+    <string name="chatbot_validation_action">You\'re doing the right thing by seeking information</string>
+    <string name="chatbot_reassurance_care">Medical professionals will take good care of you</string>
+    <string name="chatbot_encouragement_monitoring">Keep track of how you\'re feeling - this information will be helpful</string>
+    
+    <!-- Follow-up Question Templates -->
+    <string name="chatbot_followup_duration">How long have you been experiencing this</string>
+    <string name="chatbot_followup_triggers">Have you noticed anything that makes it better or worse</string>
+    <string name="chatbot_followup_description">How would you describe the %s</string>
+    <string name="chatbot_followup_additional">Is there anything else you\'ve noticed</string>
+    
+    <!-- Self-Care Suggestions -->
+    <string name="chatbot_selfcare_rest">Get plenty of rest and sleep</string>
+    <string name="chatbot_selfcare_hydration">Stay well-hydrated with water</string>
+    <string name="chatbot_selfcare_comfort">Apply a cool or warm compress for comfort</string>
+    <string name="chatbot_selfcare_gentle_activity">Try some light stretching or relaxation</string>
+    <string name="chatbot_selfcare_monitoring">Keep track of your symptoms and how you\'re feeling</string>
 </resources>

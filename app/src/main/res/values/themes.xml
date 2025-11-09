@@ -44,11 +44,17 @@
         <item name="colorOutline">@color/outline</item>
         <item name="colorOutlineVariant">@color/outline_variant</item>
         
-        <!-- Status bar and navigation -->
-        <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:navigationBarColor">?attr/colorSurface</item>
+        <!-- Status bar and navigation - Light Mode Enhanced -->
+        <item name="android:statusBarColor">@color/status_bar_light</item>
+        <item name="android:navigationBarColor">@color/navigation_bar_light</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- System UI Configuration -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
         
         <!-- Enable smooth transitions and animations -->
         <item name="android:windowContentTransitions">true</item>
@@ -62,6 +68,20 @@
         <item name="materialCardViewStyle">@style/Widget.BodhIQ.CardView</item>
         <item name="textInputStyle">@style/Widget.BodhIQ.TextInputLayout</item>
         <item name="toolbarStyle">@style/Widget.BodhIQ.Toolbar</item>
+    </style>
+    
+    <!-- Splash Screen Theme with Enhanced Status Bar -->
+    <style name="Theme.BodhIQ.Splash" parent="Theme.BodhIQ.NoActionBar">
+        <!-- Status bar matches primary color for splash -->
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <item name="android:navigationBarColor">?attr/colorPrimary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Full screen splash -->
+        <item name="android:windowBackground">?attr/colorPrimary</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
     </style>
 
     <!-- Theme for Login Activity without action bar -->
@@ -84,11 +104,17 @@
         <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
         
-        <!-- Status bar and navigation -->
-        <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:navigationBarColor">?attr/colorSurface</item>
+        <!-- Status bar and navigation - Light Mode Enhanced -->
+        <item name="android:statusBarColor">@color/status_bar_light</item>
+        <item name="android:navigationBarColor">@color/navigation_bar_light</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- System UI Configuration -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
         
         <!-- Enable smooth transitions -->
         <item name="android:windowContentTransitions">true</item>
@@ -115,6 +141,47 @@
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="backgroundTint">?attr/colorPrimary</item>
         <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <!-- Google Sign-In Button Style -->
+    <style name="Widget.BodhIQ.Button.Google" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:elevation">1dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="backgroundTint">@color/google_button_background</item>
+        <item name="android:textColor">@color/google_button_text</item>
+        <item name="strokeColor">@color/google_button_stroke</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="rippleColor">@color/google_button_ripple</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- Email Sign-In Button Style -->
+    <style name="Widget.BodhIQ.Button.Email" parent="Widget.Material3.Button">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="rippleColor">?attr/colorOnPrimary</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- Outlined Button Style -->
+    <style name="Widget.BodhIQ.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="strokeColor">?attr/colorPrimary</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="rippleColor">?attr/colorPrimary</item>
         <item name="android:minHeight">48dp</item>
     </style>
 

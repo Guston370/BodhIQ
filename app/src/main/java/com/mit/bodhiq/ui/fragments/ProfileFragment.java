@@ -26,7 +26,9 @@ import com.mit.bodhiq.models.HealthHistoryItem;
 import com.mit.bodhiq.models.WellnessGoal;
 import com.mit.bodhiq.ui.adapters.HealthHistoryAdapter;
 import com.mit.bodhiq.ui.adapters.WellnessGoalsAdapter;
+import com.mit.bodhiq.ui.login.LoginActivity;
 import com.mit.bodhiq.utils.BMICalculator;
+import com.mit.bodhiq.utils.LogoutManager;
 import com.mit.bodhiq.utils.ThemeManager;
 
 import java.text.DecimalFormat;
@@ -394,24 +396,18 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Perform complete logout process
+     * Perform complete logout process with proper navigation
      */
     private void performLogout() {
         // Show loading state
         binding.btnLogout.setEnabled(false);
         binding.btnLogout.setText("Logging out...");
         
-        // Perform logout using AuthManager
-        authManager.logout(() -> {
+        // Use LogoutManager for consistent logout behavior
+        LogoutManager.performLogout(getActivity(), authManager, () -> {
             // This callback runs after logout is complete
-            Toast.makeText(getContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
-            
-            // Navigate to login screen
-            authManager.redirectToLogin();
-            
-            // Finish the current activity if it's an Activity
-            if (getActivity() != null) {
-                getActivity().finish();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
             }
         });
     }

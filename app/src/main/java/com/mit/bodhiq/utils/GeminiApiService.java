@@ -29,6 +29,7 @@ public class GeminiApiService {
     private static final String TAG = "GeminiApiService";
     private final GenerativeModelFutures model;
     private final Executor executor;
+    private final EmpathicResponseBuilder responseBuilder;
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 1000;
     
@@ -37,34 +38,21 @@ public class GeminiApiService {
     private static final int MAX_OUTPUT_TOKENS = 65536;
     private static final double TEMPERATURE = 0.7; // Slightly lower for medical accuracy
     
-    // Enhanced medical prompt template for Gemini 2.5 Pro
+    // Base medical system prompt for report analysis
     private static final String MEDICAL_SYSTEM_PROMPT = 
-        "You are BodhIQ Medical Assistant, powered by Google's advanced Gemini 2.5 Pro AI. " +
-        "Your mission is to provide accurate, empathetic, and actionable health information to empower patients. " +
-        "\n\n🎯 **CORE RESPONSIBILITIES:**\n" +
-        "• Provide evidence-based health education and guidance\n" +
-        "• Analyze symptoms and suggest appropriate care levels\n" +
-        "• Explain medical reports and test results in simple terms\n" +
-        "• Offer wellness recommendations and preventive care advice\n" +
-        "• Guide users on when to seek professional medical care\n\n" +
-        "⚠️ **CRITICAL SAFETY GUIDELINES:**\n" +
-        "1. **Medical Disclaimer**: Always emphasize this is educational information only\n" +
-        "2. **Professional Consultation**: Encourage consulting healthcare providers for medical decisions\n" +
-        "3. **Emergency Recognition**: If symptoms suggest emergency, advise immediate medical attention\n" +
-        "4. **Medication Safety**: Never provide specific dosing; refer to healthcare professionals\n" +
-        "5. **Diagnostic Limitations**: Clarify that AI cannot replace professional diagnosis\n\n" +
-        "📝 **RESPONSE FORMAT:**\n" +
-        "• Use clear headings with relevant emojis (🩺 💊 🏥 ⚠️ 📋)\n" +
-        "• Structure with bullet points for easy scanning\n" +
-        "• Include severity indicators when appropriate\n" +
-        "• Provide actionable next steps\n" +
-        "• End with appropriate medical disclaimer\n\n" +
-        "💡 **COMMUNICATION STYLE:**\n" +
-        "• Be empathetic and supportive\n" +
-        "• Use patient-friendly language\n" +
-        "• Acknowledge concerns and validate feelings\n" +
-        "• Provide hope while being realistic\n" +
-        "• Include relevant health tips and prevention advice\n\n";
+        "You are BodhIQ, a compassionate medical assistant designed to provide supportive, " +
+        "empathetic health guidance. Your role is to help users understand their health " +
+        "information in a reassuring, educational manner while maintaining appropriate " +
+        "medical boundaries.\n\n" +
+        "CORE PRINCIPLES:\n" +
+        "- Always respond with empathy and understanding\n" +
+        "- Provide balanced, non-alarming information\n" +
+        "- Focus on education and empowerment\n" +
+        "- Encourage appropriate medical consultation when needed\n" +
+        "- Never provide definitive diagnoses\n" +
+        "- Maintain a warm, supportive tone\n\n";
+    
+
 
     @Inject
     public GeminiApiService(Context context) {
@@ -77,17 +65,24 @@ public class GeminiApiService {
         
         this.model = GenerativeModelFutures.from(gm);
         this.executor = Executors.newSingleThreadExecutor();
+        this.responseBuilder = new EmpathicResponseBuilder(context);
     }
 
     /**
-     * Generate a medical response using Gemini API
+     * Generate an empathetic medical response using Gemini API
      */
     public void generateMedicalResponse(String userMessage, String userContext, GeminiCallback callback) {
-        // Construct the full prompt with medical context
-        String fullPrompt = MEDICAL_SYSTEM_PROMPT + 
+        // Detect severity from user input
+        ChatMessage.Severity detectedSeverity = EmpathicMedicalResponseGenerator.detectSeverityFromInput(userMessage);
+        
+        // Generate empathetic system prompt based on severity
+        String systemPrompt = EmpathicMedicalResponseGenerator.generateEmpathicSystemPrompt(detectedSeverity);
+        
+        // Construct the full prompt with empathetic context
+        String fullPrompt = systemPrompt + 
                            (userContext != null ? "User Context: " + userContext + "\n\n" : "") +
-                           "User Question: " + userMessage + "\n\n" +
-                           "Please provide a helpful, medically accurate response:";
+                           "User Message: " + userMessage + "\n\n" +
+                           "Please respond with empathy, reassurance, and appropriate medical guidance based on the detected severity level (" + detectedSeverity.name() + "):";
         
         Content content = new Content.Builder()
                 .addText(fullPrompt)
@@ -101,8 +96,8 @@ public class GeminiApiService {
                 try {
                     String responseText = result.getText();
                     if (responseText != null && !responseText.trim().isEmpty()) {
-                        // Create ChatMessage from response
-                        ChatMessage chatMessage = createChatMessageFromResponse(responseText, userMessage);
+                        // Create ChatMessage from response with detected severity
+                        ChatMessage chatMessage = createEmpathicChatMessage(responseText, userMessage, detectedSeverity);
                         callback.onSuccess(chatMessage);
                     } else {
                         callback.onError("Empty response from Gemini API");
@@ -122,19 +117,15 @@ public class GeminiApiService {
     }
 
     /**
-     * Generate symptom analysis using Gemini API
+     * Generate empathetic symptom analysis using Gemini API
      */
     public void analyzeSymptoms(String symptoms, String patientHistory, GeminiCallback callback) {
-        String symptomPrompt = MEDICAL_SYSTEM_PROMPT +
-                              "SYMPTOM ANALYSIS REQUEST:\n" +
-                              "Patient History: " + (patientHistory != null ? patientHistory : "Not provided") + "\n" +
-                              "Current Symptoms: " + symptoms + "\n\n" +
-                              "Please provide:\n" +
-                              "1. Possible causes (educational purposes)\n" +
-                              "2. When to seek medical attention\n" +
-                              "3. General self-care recommendations\n" +
-                              "4. Red flag symptoms to watch for\n\n" +
-                              "Remember to emphasize consulting healthcare professionals.";
+        // Detect severity from symptoms
+        ChatMessage.Severity detectedSeverity = EmpathicMedicalResponseGenerator.detectSeverityFromInput(symptoms);
+        
+        // Create empathetic symptom analysis prompt
+        String symptomPrompt = EmpathicMedicalResponseGenerator.createSymptomAnalysisPrompt(
+            symptoms, patientHistory, detectedSeverity);
 
         Content content = new Content.Builder()
                 .addText(symptomPrompt)
@@ -148,10 +139,8 @@ public class GeminiApiService {
                 try {
                     String responseText = result.getText();
                     if (responseText != null && !responseText.trim().isEmpty()) {
-                        ChatMessage chatMessage = createChatMessageFromResponse(responseText, symptoms);
-                        // Set higher severity for symptom analysis
-                        chatMessage.setSeverity(determineSeverityFromResponse(responseText));
-                        chatMessage.setRequiresFollowUp(shouldRequireFollowUp(responseText));
+                        ChatMessage chatMessage = createEmpathicChatMessage(responseText, symptoms, detectedSeverity);
+                        chatMessage.setRequiresFollowUp(shouldRequireFollowUp(responseText, detectedSeverity));
                         callback.onSuccess(chatMessage);
                     } else {
                         callback.onError("Empty response from Gemini API");
@@ -220,25 +209,29 @@ public class GeminiApiService {
     }
 
     /**
-     * Create ChatMessage from Gemini response
+     * Create empathetic ChatMessage from Gemini response
      */
-    private ChatMessage createChatMessageFromResponse(String responseText, String originalQuery) {
+    private ChatMessage createEmpathicChatMessage(String responseText, String originalQuery, ChatMessage.Severity severity) {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setType(ChatMessage.MessageType.AI_RESPONSE);
         chatMessage.setFromUser(false);
         chatMessage.setContent(responseText);
         chatMessage.setTimestamp(System.currentTimeMillis());
+        chatMessage.setSeverity(severity);
         
-        // Add medical disclaimer if not already present
-        if (!responseText.toLowerCase().contains("disclaimer") && 
-            !responseText.toLowerCase().contains("consult") &&
-            !responseText.toLowerCase().contains("healthcare provider")) {
-            chatMessage.setMedicalDisclaimer(
-                "⚠️ This information is for educational purposes only. Always consult your healthcare provider for medical advice."
-            );
-        }
+        // Add appropriate medical disclaimer based on severity
+        String disclaimer = EmpathicMedicalResponseGenerator.generateMedicalDisclaimer(severity);
+        chatMessage.setMedicalDisclaimer(disclaimer);
         
         return chatMessage;
+    }
+    
+    /**
+     * Legacy method for backward compatibility
+     */
+    private ChatMessage createChatMessageFromResponse(String responseText, String originalQuery) {
+        ChatMessage.Severity detectedSeverity = EmpathicMedicalResponseGenerator.detectSeverityFromInput(originalQuery);
+        return createEmpathicChatMessage(responseText, originalQuery, detectedSeverity);
     }
 
     /**
@@ -267,15 +260,31 @@ public class GeminiApiService {
     }
 
     /**
-     * Determine if follow-up is required based on response
+     * Determine if follow-up is required based on response and severity
      */
-    private boolean shouldRequireFollowUp(String response) {
+    private boolean shouldRequireFollowUp(String response, ChatMessage.Severity severity) {
         String lowerResponse = response.toLowerCase();
+        
+        // Always require follow-up for high and critical severity
+        if (severity == ChatMessage.Severity.HIGH || severity == ChatMessage.Severity.CRITICAL) {
+            return true;
+        }
+        
+        // Check response content for follow-up indicators
         return lowerResponse.contains("follow up") ||
                lowerResponse.contains("see a doctor") ||
                lowerResponse.contains("consult") ||
                lowerResponse.contains("medical attention") ||
-               lowerResponse.contains("healthcare provider");
+               lowerResponse.contains("healthcare provider") ||
+               lowerResponse.contains("monitor") ||
+               lowerResponse.contains("if symptoms persist");
+    }
+    
+    /**
+     * Legacy method for backward compatibility
+     */
+    private boolean shouldRequireFollowUp(String response) {
+        return shouldRequireFollowUp(response, ChatMessage.Severity.MEDIUM);
     }
 
     /**
