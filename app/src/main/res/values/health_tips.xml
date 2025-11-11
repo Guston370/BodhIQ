@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="health_tips">
+        <item>💧 Stay hydrated: Drink 8-10 glasses of water daily for optimal health</item>
+        <item>🏃 Regular exercise: 30 minutes of activity 5 days a week reduces disease risk</item>
+        <item>😴 Quality sleep: 7-9 hours nightly supports immune function and recovery</item>
+        <item>🥗 Balanced diet: Include fruits, vegetables, and whole grains daily</item>
+        <item>🧘 Stress management: Practice relaxation techniques to reduce cortisol levels</item>
+        <item>📅 Regular check-ups: Annual health screenings catch issues early</item>
+        <item>🚭 Avoid smoking: Quitting reduces heart disease and cancer risk significantly</item>
+        <item>🍷 Limit alcohol: Moderate consumption protects liver and heart health</item>
+        <item>🧼 Hand hygiene: Wash hands frequently to prevent infections</item>
+        <item>☀️ Vitamin D: Get 15 minutes of sunlight daily for bone health</item>
+    </string-array>
+</resources>
