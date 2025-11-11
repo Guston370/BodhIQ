@@ -42,23 +42,37 @@ public class ProfileRepository {
      * Get current user profile from Firestore
      */
     public Single<UserProfile> getUserProfile() {
-        return Single.fromCallable(() -> {
+        return Single.<UserProfile>create(emitter -> {
             String userId = getCurrentUserId();
             if (userId == null) {
-                throw new IllegalStateException("User not authenticated");
+                emitter.onError(new IllegalStateException("User not authenticated"));
+                return;
             }
             
-            return firestore.collection(COLLECTION_USERS)
+            firestore.collection(COLLECTION_USERS)
                 .document(userId)
                 .get()
-                .continueWith(task -> {
-                    if (task.isSuccessful() && task.getResult().exists()) {
-                        return task.getResult().toObject(UserProfile.class);
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        UserProfile profile = documentSnapshot.toObject(UserProfile.class);
+                        if (profile != null) {
+                            emitter.onSuccess(profile);
+                        } else {
+                            emitter.onSuccess(createProfileFromAuth());
+                        }
                     } else {
                         // Create profile from Firebase Auth data if doesn't exist
-                        return createProfileFromAuth();
+                        UserProfile newProfile = createProfileFromAuth();
+                        // Save the new profile to Firestore
+                        saveUserProfileSync(newProfile);
+                        emitter.onSuccess(newProfile);
                     }
-                }).getResult();
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ProfileRepository", "Failed to get profile", e);
+                    // Fallback to auth data
+                    emitter.onSuccess(createProfileFromAuth());
+                });
         }).subscribeOn(Schedulers.io());
     }
     
@@ -66,10 +80,11 @@ public class ProfileRepository {
      * Save or update user profile
      */
     public Completable saveUserProfile(UserProfile profile) {
-        return Completable.fromAction(() -> {
+        return Completable.create(emitter -> {
             String userId = getCurrentUserId();
             if (userId == null) {
-                throw new IllegalStateException("User not authenticated");
+                emitter.onError(new IllegalStateException("User not authenticated"));
+                return;
             }
             
             profile.setUserId(userId);
@@ -78,20 +93,47 @@ public class ProfileRepository {
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
                 .set(profile)
+                .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("ProfileRepository", "Profile saved successfully");
+                    emitter.onComplete();
+                })
                 .addOnFailureListener(e -> {
-                    throw new RuntimeException("Failed to save profile", e);
+                    android.util.Log.e("ProfileRepository", "Failed to save profile", e);
+                    emitter.onError(new RuntimeException("Failed to save profile: " + e.getMessage(), e));
                 });
         }).subscribeOn(Schedulers.io());
+    }
+    
+    /**
+     * Save user profile synchronously (for internal use)
+     */
+    private void saveUserProfileSync(UserProfile profile) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            return;
+        }
+        
+        profile.setUserId(userId);
+        profile.setUpdatedAt(System.currentTimeMillis());
+        
+        firestore.collection(COLLECTION_USERS)
+            .document(userId)
+            .set(profile)
+            .addOnSuccessListener(aVoid -> 
+                android.util.Log.d("ProfileRepository", "Profile auto-saved"))
+            .addOnFailureListener(e -> 
+                android.util.Log.e("ProfileRepository", "Failed to auto-save profile", e));
     }
     
     /**
      * Upload profile image to Firebase Storage
      */
     public Single<String> uploadProfileImage(Uri imageUri) {
-        return Single.fromCallable(() -> {
+        return Single.<String>create(emitter -> {
             String userId = getCurrentUserId();
             if (userId == null) {
-                throw new IllegalStateException("User not authenticated");
+                emitter.onError(new IllegalStateException("User not authenticated"));
+                return;
             }
             
             String fileName = "profile_" + userId + "_" + UUID.randomUUID().toString() + ".jpg";
@@ -99,20 +141,22 @@ public class ProfileRepository {
                 .child(STORAGE_PATH_PROFILE_IMAGES)
                 .child(fileName);
             
-            return imageRef.putFile(imageUri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        throw new RuntimeException("Upload failed", task.getException());
-                    }
-                    return imageRef.getDownloadUrl();
+            imageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    imageRef.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            android.util.Log.d("ProfileRepository", "Image uploaded: " + uri.toString());
+                            emitter.onSuccess(uri.toString());
+                        })
+                        .addOnFailureListener(e -> {
+                            android.util.Log.e("ProfileRepository", "Failed to get download URL", e);
+                            emitter.onError(new RuntimeException("Failed to get download URL: " + e.getMessage(), e));
+                        });
                 })
-                .continueWith(task -> {
-                    if (task.isSuccessful()) {
-                        return task.getResult().toString();
-                    } else {
-                        throw new RuntimeException("Failed to get download URL", task.getException());
-                    }
-                }).getResult();
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ProfileRepository", "Upload failed", e);
+                    emitter.onError(new RuntimeException("Upload failed: " + e.getMessage(), e));
+                });
         }).subscribeOn(Schedulers.io());
     }
     
@@ -154,6 +198,41 @@ public class ProfileRepository {
             }
         }
         return "Email Account";
+    }
+    
+    /**
+     * Sync profile data from Firebase (call on app start)
+     */
+    public Completable syncProfileFromCloud() {
+        return Completable.create(emitter -> {
+            String userId = getCurrentUserId();
+            if (userId == null) {
+                emitter.onComplete(); // Not logged in, nothing to sync
+                return;
+            }
+            
+            android.util.Log.d("ProfileRepository", "Syncing profile from cloud...");
+            
+            firestore.collection(COLLECTION_USERS)
+                .document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        android.util.Log.d("ProfileRepository", "Profile synced from cloud");
+                        emitter.onComplete();
+                    } else {
+                        // Create initial profile if doesn't exist
+                        UserProfile newProfile = createProfileFromAuth();
+                        saveUserProfileSync(newProfile);
+                        android.util.Log.d("ProfileRepository", "Created initial profile in cloud");
+                        emitter.onComplete();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ProfileRepository", "Failed to sync profile", e);
+                    emitter.onComplete(); // Don't fail, just log
+                });
+        }).subscribeOn(Schedulers.io());
     }
     
     /**

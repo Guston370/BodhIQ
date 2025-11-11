@@ -25,8 +25,13 @@ import com.mit.bodhiq.ui.fragments.HomeFragment;
 import com.mit.bodhiq.ui.fragments.ProfileFragment;
 import com.mit.bodhiq.ui.fragments.ReportsFragment;
 import com.mit.bodhiq.ui.login.LoginActivity;
+import com.mit.bodhiq.data.repository.ProfileRepository;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
 /**
  * MainActivity - Main app container with bottom navigation
@@ -40,6 +45,10 @@ public class MainActivity extends BaseActivity {
     private FirebaseAuth mAuth;
     private AuthManager authManager;
     private FragmentManager fragmentManager;
+    private CompositeDisposable disposables = new CompositeDisposable();
+    
+    @Inject
+    ProfileRepository profileRepository;
     
     // AuthStateListener to monitor authentication changes
     private FirebaseAuth.AuthStateListener authStateListener;
@@ -75,6 +84,9 @@ public class MainActivity extends BaseActivity {
         
         // Check authentication state
         checkAuthenticationState();
+        
+        // Sync profile from cloud
+        syncProfileData();
         
         // Initialize fragments and navigation
         initializeFragments();
@@ -267,9 +279,24 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    /**
+     * Sync profile data from Firebase cloud
+     */
+    private void syncProfileData() {
+        disposables.add(
+            profileRepository.syncProfileFromCloud()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    () -> Log.d("MainActivity", "Profile synced from cloud"),
+                    error -> Log.e("MainActivity", "Failed to sync profile", error)
+                )
+        );
+    }
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        disposables.dispose();
         binding = null;
     }
 }
