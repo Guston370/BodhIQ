@@ -7,6 +7,8 @@ import com.mit.bodhiq.data.database.dao.AgentResultDao;
 import com.mit.bodhiq.data.database.dao.QueryDao;
 import com.mit.bodhiq.data.database.dao.ReportDao;
 import com.mit.bodhiq.data.database.dao.UserDao;
+import com.mit.bodhiq.data.database.dao.ReminderDao;
+import com.mit.bodhiq.data.database.dao.ReminderHistoryDao;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
@@ -84,5 +86,27 @@ public class DatabaseModule {
     @Provides
     public ReportDao provideReportDao(AppDatabase database) {
         return database.reportDao();
+    }
+    
+    /**
+     * Provides ReminderDao for reminder-related database operations.
+     *
+     * @param database AppDatabase instance
+     * @return ReminderDao instance
+     */
+    @Provides
+    public ReminderDao provideReminderDao(AppDatabase database) {
+        return database.reminderDao();
+    }
+    
+    /**
+     * Provides ReminderHistoryDao for reminder history database operations.
+     *
+     * @param database AppDatabase instance
+     * @return ReminderHistoryDao instance
+     */
+    @Provides
+    public ReminderHistoryDao provideReminderHistoryDao(AppDatabase database) {
+        return database.reminderHistoryDao();
     }
 }

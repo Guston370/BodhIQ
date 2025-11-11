@@ -61,6 +61,10 @@ public class MainActivity extends BaseActivity {
         
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        
+        // Apply window insets to handle status bar properly
+        // Only apply bottom inset for navigation bar, fragments will handle their own top insets
+        applyBottomInset(binding.bottomNavigation);
 
         // Initialize Firebase Auth and AuthManager
         mAuth = FirebaseAuth.getInstance();

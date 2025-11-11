@@ -9,10 +9,14 @@ import com.mit.bodhiq.data.database.dao.AgentResultDao;
 import com.mit.bodhiq.data.database.dao.QueryDao;
 import com.mit.bodhiq.data.database.dao.ReportDao;
 import com.mit.bodhiq.data.database.dao.UserDao;
+import com.mit.bodhiq.data.database.dao.ReminderDao;
+import com.mit.bodhiq.data.database.dao.ReminderHistoryDao;
 import com.mit.bodhiq.data.database.entity.AgentResult;
 import com.mit.bodhiq.data.database.entity.Query;
 import com.mit.bodhiq.data.database.entity.Report;
 import com.mit.bodhiq.data.database.entity.User;
+import com.mit.bodhiq.data.database.entity.Reminder;
+import com.mit.bodhiq.data.database.entity.ReminderHistory;
 import java.util.concurrent.Executors;
 
 /**
@@ -24,18 +28,45 @@ import java.util.concurrent.Executors;
         User.class,
         Query.class,
         AgentResult.class,
-        Report.class
+        Report.class,
+        Reminder.class,
+        ReminderHistory.class
     },
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
+    
+    private static volatile AppDatabase INSTANCE;
     
     // Abstract methods to get DAOs
     public abstract UserDao userDao();
     public abstract QueryDao queryDao();
     public abstract AgentResultDao agentResultDao();
     public abstract ReportDao reportDao();
+    public abstract ReminderDao reminderDao();
+    public abstract ReminderHistoryDao reminderHistoryDao();
+    
+    /**
+     * Get database instance (for use in BroadcastReceivers where Hilt is not available)
+     */
+    public static AppDatabase getInstance(android.content.Context context) {
+        if (INSTANCE == null) {
+            synchronized (AppDatabase.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = Room.databaseBuilder(
+                        context.getApplicationContext(),
+                        AppDatabase.class,
+                        "bodhiq_database"
+                    )
+                    .addCallback(DATABASE_CALLBACK)
+                    .fallbackToDestructiveMigration()
+                    .build();
+                }
+            }
+        }
+        return INSTANCE;
+    }
     
     /**
      * Database callback for pre-seeding initial data.

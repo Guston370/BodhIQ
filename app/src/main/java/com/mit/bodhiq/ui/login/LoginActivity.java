@@ -76,6 +76,9 @@ public class LoginActivity extends BaseActivity {
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         
+        // Apply window insets for edge-to-edge display
+        applyTopInset(binding.getRoot());
+        
         // Initialize Firebase components
         initializeFirebase();
         

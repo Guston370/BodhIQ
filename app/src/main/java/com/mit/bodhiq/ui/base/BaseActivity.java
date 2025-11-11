@@ -26,8 +26,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         
         super.onCreate(savedInstanceState);
         
-        // Configure status bar with enhanced contrast and gesture navigation support
-        StatusBarUtils.configureForGestureNavigation(this);
+        // Configure edge-to-edge display with proper window insets
+        // This ensures content doesn't overlap with status bar
+        StatusBarUtils.configureEdgeToEdge(this);
     }
     
     @Override
@@ -59,10 +60,32 @@ public abstract class BaseActivity extends AppCompatActivity {
      * Called when theme changes. Override in subclasses to handle theme-specific updates
      */
     protected void onThemeChanged() {
-        // Update status bar for new theme with enhanced configuration
-        StatusBarUtils.configureForGestureNavigation(this);
+        // Update status bar for new theme with edge-to-edge configuration
+        StatusBarUtils.configureEdgeToEdge(this);
         
         // Subclasses can override to handle additional theme changes
+    }
+    
+    /**
+     * Apply window insets to a view
+     * Call this in onCreate after setContentView for proper edge-to-edge support
+     */
+    protected void applyWindowInsets(android.view.View view) {
+        StatusBarUtils.applyWindowInsets(view);
+    }
+    
+    /**
+     * Apply top inset only (for status bar)
+     */
+    protected void applyTopInset(android.view.View view) {
+        StatusBarUtils.applyTopInset(view);
+    }
+    
+    /**
+     * Apply bottom inset only (for navigation bar)
+     */
+    protected void applyBottomInset(android.view.View view) {
+        StatusBarUtils.applyBottomInset(view);
     }
     
     /**

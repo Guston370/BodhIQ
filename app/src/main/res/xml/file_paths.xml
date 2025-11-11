@@ -6,6 +6,9 @@
     <!-- Cache directory for temporary files -->
     <cache-path name="cache_files" path="." />
     
+    <!-- Cache directory for QR code images -->
+    <cache-path name="qr_images" path="images/" />
+    
     <!-- External files directory -->
     <external-files-path name="external_files" path="." />
 </paths>

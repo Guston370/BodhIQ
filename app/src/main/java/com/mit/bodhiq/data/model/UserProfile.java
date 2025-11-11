@@ -12,7 +12,14 @@ public class UserProfile {
     private String email;
     private String phoneNumber;
     private String age;
+    private String dateOfBirth;
     private String gender;
+    private String address;
+    private String bloodGroup;
+    private String height;
+    private String weight;
+    private String allergies;
+    private String emergencyContact;
     private String profileImageUrl;
     private String loginProvider;
     private long createdAt;
@@ -48,6 +55,27 @@ public class UserProfile {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
+    public String getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getBloodGroup() { return bloodGroup; }
+    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+
+    public String getHeight() { return height; }
+    public void setHeight(String height) { this.height = height; }
+
+    public String getWeight() { return weight; }
+    public void setWeight(String weight) { this.weight = weight; }
+
+    public String getAllergies() { return allergies; }
+    public void setAllergies(String allergies) { this.allergies = allergies; }
+
+    public String getEmergencyContact() { return emergencyContact; }
+    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+
     public String getProfileImageUrl() { return profileImageUrl; }
     public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
 
@@ -70,7 +98,14 @@ public class UserProfile {
         result.put("email", email);
         result.put("phoneNumber", phoneNumber);
         result.put("age", age);
+        result.put("dateOfBirth", dateOfBirth);
         result.put("gender", gender);
+        result.put("address", address);
+        result.put("bloodGroup", bloodGroup);
+        result.put("height", height);
+        result.put("weight", weight);
+        result.put("allergies", allergies);
+        result.put("emergencyContact", emergencyContact);
         result.put("profileImageUrl", profileImageUrl);
         result.put("loginProvider", loginProvider);
         result.put("createdAt", createdAt);
@@ -88,7 +123,14 @@ public class UserProfile {
         profile.setEmail((String) map.get("email"));
         profile.setPhoneNumber((String) map.get("phoneNumber"));
         profile.setAge((String) map.get("age"));
+        profile.setDateOfBirth((String) map.get("dateOfBirth"));
         profile.setGender((String) map.get("gender"));
+        profile.setAddress((String) map.get("address"));
+        profile.setBloodGroup((String) map.get("bloodGroup"));
+        profile.setHeight((String) map.get("height"));
+        profile.setWeight((String) map.get("weight"));
+        profile.setAllergies((String) map.get("allergies"));
+        profile.setEmergencyContact((String) map.get("emergencyContact"));
         profile.setProfileImageUrl((String) map.get("profileImageUrl"));
         profile.setLoginProvider((String) map.get("loginProvider"));
         

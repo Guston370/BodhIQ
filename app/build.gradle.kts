@@ -121,6 +121,10 @@ dependencies {
     // ViewPager2 for tabs
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     
+    // ZXing for QR code generation
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    
     // Testing dependencies
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")

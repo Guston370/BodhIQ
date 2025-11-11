@@ -5,9 +5,14 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.mit.bodhiq.R;
 
 /**
@@ -82,18 +87,110 @@ public class StatusBarUtils {
     
     /**
      * Configure status bar for edge-to-edge display with proper insets
+     * This is the main method to call for proper edge-to-edge setup
      */
     public static void configureEdgeToEdge(Activity activity) {
-        if (activity == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
+        if (activity == null) return;
         
         Window window = activity.getWindow();
         if (window == null) return;
         
-        // Enable edge-to-edge
-        window.setDecorFitsSystemWindows(false);
+        // Enable edge-to-edge using WindowCompat (works on all API levels)
+        WindowCompat.setDecorFitsSystemWindows(window, false);
         
-        // Configure status bar
+        // Configure status bar colors and appearance
         configureStatusBar(activity);
+        
+        // Apply window insets to root view
+        View rootView = window.getDecorView().findViewById(android.R.id.content);
+        if (rootView != null) {
+            applyWindowInsets(rootView);
+        }
+    }
+    
+    /**
+     * Apply window insets to a view to handle system bars properly
+     * This ensures content doesn't overlap with status bar or navigation bar
+     */
+    public static void applyWindowInsets(View view) {
+        if (view == null) return;
+        
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            
+            // Apply padding to avoid overlap with system bars
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (params != null) {
+                params.topMargin = insets.top;
+                params.bottomMargin = insets.bottom;
+                params.leftMargin = insets.left;
+                params.rightMargin = insets.right;
+                v.setLayoutParams(params);
+            } else {
+                // Fallback to padding if no layout params
+                v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            }
+            
+            return WindowInsetsCompat.CONSUMED;
+        });
+        
+        // Request insets to be applied
+        ViewCompat.requestApplyInsets(view);
+    }
+    
+    /**
+     * Apply window insets with custom handling for specific edges
+     * @param view The view to apply insets to
+     * @param applyTop Whether to apply top inset (status bar)
+     * @param applyBottom Whether to apply bottom inset (navigation bar)
+     * @param applyLeft Whether to apply left inset
+     * @param applyRight Whether to apply right inset
+     */
+    public static void applyWindowInsets(View view, boolean applyTop, boolean applyBottom, 
+                                        boolean applyLeft, boolean applyRight) {
+        if (view == null) return;
+        
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            
+            int top = applyTop ? insets.top : 0;
+            int bottom = applyBottom ? insets.bottom : 0;
+            int left = applyLeft ? insets.left : 0;
+            int right = applyRight ? insets.right : 0;
+            
+            // Try to apply as margin first (preferred for most layouts)
+            if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                params.topMargin = top;
+                params.bottomMargin = bottom;
+                params.leftMargin = left;
+                params.rightMargin = right;
+                v.setLayoutParams(params);
+            } else {
+                // Fallback to padding
+                v.setPadding(left, top, right, bottom);
+            }
+            
+            return WindowInsetsCompat.CONSUMED;
+        });
+        
+        ViewCompat.requestApplyInsets(view);
+    }
+    
+    /**
+     * Apply top inset only (for status bar)
+     * Useful for screens with toolbars or headers
+     */
+    public static void applyTopInset(View view) {
+        applyWindowInsets(view, true, false, false, false);
+    }
+    
+    /**
+     * Apply bottom inset only (for navigation bar)
+     * Useful for screens with bottom navigation
+     */
+    public static void applyBottomInset(View view) {
+        applyWindowInsets(view, false, true, false, false);
     }
     
     /**

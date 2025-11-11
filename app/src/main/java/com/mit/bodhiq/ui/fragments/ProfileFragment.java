@@ -1,11 +1,16 @@
 package com.mit.bodhiq.ui.fragments;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,10 +22,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.mit.bodhiq.utils.AuthManager;
 import com.mit.bodhiq.R;
+import com.mit.bodhiq.data.model.UserProfile;
+import com.mit.bodhiq.data.repository.ProfileRepository;
 import com.mit.bodhiq.databinding.FragmentProfileBinding;
 import com.mit.bodhiq.models.HealthHistoryItem;
 import com.mit.bodhiq.models.WellnessGoal;
@@ -32,13 +42,19 @@ import com.mit.bodhiq.utils.LogoutManager;
 import com.mit.bodhiq.utils.ThemeManager;
 
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * Enhanced ProfileFragment with comprehensive health management features
@@ -53,6 +69,12 @@ public class ProfileFragment extends Fragment {
     private WellnessGoalsAdapter wellnessGoalsAdapter;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private ThemeManager themeManager;
+    
+    @Inject
+    ProfileRepository profileRepository;
+    
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private UserProfile currentUserProfile;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -152,37 +174,85 @@ public class ProfileFragment extends Fragment {
     private void loadUserProfile() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
-            // Load basic user info
-            binding.tvUserName.setText(currentUser.getDisplayName() != null ? 
-                currentUser.getDisplayName() : "User");
-            binding.tvUserEmail.setText(currentUser.getEmail());
+            // Show loading
+            binding.layoutLoading.setVisibility(View.VISIBLE);
             
-            // Load profile picture
-            if (currentUser.getPhotoUrl() != null) {
-                Glide.with(this)
-                    .load(currentUser.getPhotoUrl())
-                    .circleCrop()
-                    .into(binding.ivProfilePicture);
+            // Load profile from Firestore
+            Disposable disposable = profileRepository.getUserProfile()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    profile -> {
+                        currentUserProfile = profile;
+                        displayUserProfile(profile);
+                        binding.layoutLoading.setVisibility(View.GONE);
+                    },
+                    error -> {
+                        // Fallback to Firebase Auth data
+                        currentUserProfile = createProfileFromFirebaseAuth(currentUser);
+                        displayUserProfile(currentUserProfile);
+                        binding.layoutLoading.setVisibility(View.GONE);
+                    }
+                );
+            compositeDisposable.add(disposable);
+        }
+    }
+    
+    private UserProfile createProfileFromFirebaseAuth(FirebaseUser user) {
+        UserProfile profile = new UserProfile();
+        profile.setUserId(user.getUid());
+        profile.setFullName(user.getDisplayName() != null ? user.getDisplayName() : "User");
+        profile.setEmail(user.getEmail());
+        if (user.getPhotoUrl() != null) {
+            profile.setProfileImageUrl(user.getPhotoUrl().toString());
+        }
+        return profile;
+    }
+    
+    private void displayUserProfile(UserProfile profile) {
+        // Basic info
+        binding.tvUserName.setText(profile.getFullName() != null ? profile.getFullName() : "User");
+        binding.tvUserEmail.setText(profile.getEmail());
+        
+        // Profile picture
+        if (profile.getProfileImageUrl() != null && !profile.getProfileImageUrl().isEmpty()) {
+            Glide.with(this)
+                .load(profile.getProfileImageUrl())
+                .circleCrop()
+                .into(binding.ivProfilePicture);
+        }
+        
+        // Health data
+        if (profile.getAge() != null && !profile.getAge().isEmpty()) {
+            binding.tvAge.setText(profile.getAge() + " years");
+        } else {
+            binding.tvAge.setText("Not set");
+        }
+        
+        binding.tvGender.setText(profile.getGender() != null ? profile.getGender() : "Not set");
+        binding.tvBloodGroup.setText(profile.getBloodGroup() != null ? profile.getBloodGroup() : "Not set");
+        binding.tvEmergencyContact.setText(profile.getEmergencyContact() != null ? profile.getEmergencyContact() : "Not set");
+        binding.tvHeight.setText(profile.getHeight() != null ? profile.getHeight() + " cm" : "Not set");
+        binding.tvWeight.setText(profile.getWeight() != null ? profile.getWeight() + " kg" : "Not set");
+        binding.tvAllergies.setText(profile.getAllergies() != null && !profile.getAllergies().isEmpty() ? 
+            profile.getAllergies() : "None");
+        
+        // Calculate BMI if height and weight are available
+        if (profile.getHeight() != null && profile.getWeight() != null) {
+            try {
+                double height = Double.parseDouble(profile.getHeight());
+                double weight = Double.parseDouble(profile.getWeight());
+                calculateAndDisplayBMI(height, weight);
+            } catch (NumberFormatException e) {
+                binding.tvBmiValue.setText("--");
+                binding.tvBmiCategory.setText("Data incomplete");
             }
-            
-            // Load health data
-            loadHealthData();
+        } else {
+            binding.tvBmiValue.setText("--");
+            binding.tvBmiCategory.setText("Data incomplete");
         }
     }
 
-    private void loadHealthData() {
-        // Sample data - replace with actual data loading
-        binding.tvAge.setText("25 years");
-        binding.tvGender.setText("Male");
-        binding.tvBloodGroup.setText("O+");
-        binding.tvEmergencyContact.setText("+1 234 567 8900");
-        binding.tvHeight.setText("175 cm");
-        binding.tvWeight.setText("70 kg");
-        binding.tvAllergies.setText("Peanuts, Shellfish");
-        
-        // Calculate and display BMI
-        calculateAndDisplayBMI(175, 70); // height in cm, weight in kg
-    }
+
 
     private void calculateAndDisplayBMI(double heightCm, double weightKg) {
         double bmi = BMICalculator.calculateBMI(heightCm, weightKg);
@@ -253,11 +323,229 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showEditProfileDialog() {
-        Toast.makeText(getContext(), "Edit profile feature coming soon", Toast.LENGTH_SHORT).show();
+        if (currentUserProfile == null) {
+            Toast.makeText(getContext(), "Loading profile data...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_profile_full, null);
+        
+        // Initialize input fields
+        TextInputEditText etFullName = dialogView.findViewById(R.id.et_full_name);
+        TextInputEditText etEmail = dialogView.findViewById(R.id.et_email);
+        TextInputEditText etPhone = dialogView.findViewById(R.id.et_phone);
+        TextInputEditText etAge = dialogView.findViewById(R.id.et_age);
+        TextInputEditText etDateOfBirth = dialogView.findViewById(R.id.et_date_of_birth);
+        AutoCompleteTextView etGender = dialogView.findViewById(R.id.et_gender);
+        AutoCompleteTextView etBloodGroup = dialogView.findViewById(R.id.et_blood_group);
+        TextInputEditText etHeight = dialogView.findViewById(R.id.et_height);
+        TextInputEditText etWeight = dialogView.findViewById(R.id.et_weight);
+        TextInputEditText etEmergencyContact = dialogView.findViewById(R.id.et_emergency_contact);
+        TextInputEditText etAddress = dialogView.findViewById(R.id.et_address);
+        TextInputEditText etAllergies = dialogView.findViewById(R.id.et_allergies);
+        
+        // Populate current values
+        etFullName.setText(currentUserProfile.getFullName());
+        etEmail.setText(currentUserProfile.getEmail());
+        etPhone.setText(currentUserProfile.getPhoneNumber());
+        etAge.setText(currentUserProfile.getAge());
+        etDateOfBirth.setText(currentUserProfile.getDateOfBirth());
+        etGender.setText(currentUserProfile.getGender());
+        etBloodGroup.setText(currentUserProfile.getBloodGroup());
+        etHeight.setText(currentUserProfile.getHeight());
+        etWeight.setText(currentUserProfile.getWeight());
+        etEmergencyContact.setText(currentUserProfile.getEmergencyContact());
+        etAddress.setText(currentUserProfile.getAddress());
+        etAllergies.setText(currentUserProfile.getAllergies());
+        
+        // Setup dropdowns
+        String[] genders = {"Male", "Female", "Other", "Prefer not to say"};
+        ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(getContext(), 
+            android.R.layout.simple_dropdown_item_1line, genders);
+        etGender.setAdapter(genderAdapter);
+        
+        String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
+        ArrayAdapter<String> bloodGroupAdapter = new ArrayAdapter<>(getContext(), 
+            android.R.layout.simple_dropdown_item_1line, bloodGroups);
+        etBloodGroup.setAdapter(bloodGroupAdapter);
+        
+        // Date picker for date of birth
+        etDateOfBirth.setOnClickListener(v -> showDatePicker(etDateOfBirth));
+        
+        // Create dialog
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(getContext())
+            .setView(dialogView);
+        
+        androidx.appcompat.app.AlertDialog dialog = dialogBuilder.create();
+        
+        // Setup buttons
+        dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
+        
+        dialogView.findViewById(R.id.btn_save).setOnClickListener(v -> {
+            // Validate and save
+            String fullName = etFullName.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String phone = etPhone.getText().toString().trim();
+            String age = etAge.getText().toString().trim();
+            String dateOfBirth = etDateOfBirth.getText().toString().trim();
+            String gender = etGender.getText().toString().trim();
+            String bloodGroup = etBloodGroup.getText().toString().trim();
+            String height = etHeight.getText().toString().trim();
+            String weight = etWeight.getText().toString().trim();
+            String emergencyContact = etEmergencyContact.getText().toString().trim();
+            String address = etAddress.getText().toString().trim();
+            String allergies = etAllergies.getText().toString().trim();
+            
+            // Validate required fields
+            if (TextUtils.isEmpty(fullName)) {
+                Toast.makeText(getContext(), "Please enter your full name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(getContext(), "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Update profile
+            currentUserProfile.setFullName(fullName);
+            currentUserProfile.setEmail(email);
+            currentUserProfile.setPhoneNumber(phone);
+            currentUserProfile.setAge(age);
+            currentUserProfile.setDateOfBirth(dateOfBirth);
+            currentUserProfile.setGender(gender);
+            currentUserProfile.setBloodGroup(bloodGroup);
+            currentUserProfile.setHeight(height);
+            currentUserProfile.setWeight(weight);
+            currentUserProfile.setEmergencyContact(emergencyContact);
+            currentUserProfile.setAddress(address);
+            currentUserProfile.setAllergies(allergies);
+            
+            dialog.dismiss();
+            saveUserProfile(currentUserProfile);
+        });
+        
+        dialog.show();
+    }
+    
+    private void showDatePicker(TextInputEditText editText) {
+        Calendar calendar = Calendar.getInstance();
+        
+        // Parse existing date if available
+        String currentDate = editText.getText().toString();
+        if (!TextUtils.isEmpty(currentDate)) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                Date date = sdf.parse(currentDate);
+                if (date != null) {
+                    calendar.setTime(date);
+                }
+            } catch (Exception e) {
+                // Use current date
+            }
+        }
+        
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+            getContext(),
+            (view, year, month, dayOfMonth) -> {
+                String selectedDate = String.format(Locale.getDefault(), "%02d/%02d/%d", 
+                    dayOfMonth, month + 1, year);
+                editText.setText(selectedDate);
+                
+                // Calculate age
+                Calendar dob = Calendar.getInstance();
+                dob.set(year, month, dayOfMonth);
+                int age = Calendar.getInstance().get(Calendar.YEAR) - year;
+                if (Calendar.getInstance().get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+                    age--;
+                }
+                
+                // Update age field if available
+                View parent = (View) editText.getParent().getParent().getParent();
+                TextInputEditText etAge = parent.findViewById(R.id.et_age);
+                if (etAge != null) {
+                    etAge.setText(String.valueOf(age));
+                }
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        );
+        
+        // Set max date to today
+        datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        datePickerDialog.show();
+    }
+    
+    private void saveUserProfile(UserProfile profile) {
+        // Show loading
+        binding.layoutLoading.setVisibility(View.VISIBLE);
+        
+        Disposable disposable = profileRepository.saveUserProfile(profile)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                () -> {
+                    // Update Firebase Auth email if changed
+                    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                    if (currentUser != null && !profile.getEmail().equals(currentUser.getEmail())) {
+                        updateFirebaseEmail(profile.getEmail());
+                    }
+                    
+                    // Update Firebase Auth display name if changed
+                    if (currentUser != null && !profile.getFullName().equals(currentUser.getDisplayName())) {
+                        updateFirebaseDisplayName(profile.getFullName());
+                    }
+                    
+                    binding.layoutLoading.setVisibility(View.GONE);
+                    displayUserProfile(profile);
+                    
+                    Snackbar.make(binding.getRoot(), "Profile updated successfully", Snackbar.LENGTH_LONG)
+                        .setAction("OK", v -> {})
+                        .show();
+                },
+                error -> {
+                    binding.layoutLoading.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Failed to update profile: " + error.getMessage(), 
+                        Toast.LENGTH_LONG).show();
+                }
+            );
+        compositeDisposable.add(disposable);
+    }
+    
+    private void updateFirebaseEmail(String newEmail) {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            user.updateEmail(newEmail)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Email synced with Firebase", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Email sync failed. Please re-authenticate.", 
+                        Toast.LENGTH_SHORT).show();
+                });
+        }
+    }
+    
+    private void updateFirebaseDisplayName(String newName) {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(newName)
+                .build();
+            
+            user.updateProfile(profileUpdates)
+                .addOnSuccessListener(aVoid -> {
+                    // Name updated successfully
+                })
+                .addOnFailureListener(e -> {
+                    // Handle error silently
+                });
+        }
     }
 
     private void generateEmergencyQRCode() {
-        Toast.makeText(getContext(), "QR Code generation feature coming soon", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(getContext(), com.mit.bodhiq.ui.EmergencyQrActivity.class);
+        startActivity(intent);
     }
 
     private void onHealthHistoryItemClick(HealthHistoryItem item) {
@@ -274,7 +562,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void manageMedicineReminders() {
-        Toast.makeText(getContext(), "Medicine reminders feature coming soon", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(getContext(), com.mit.bodhiq.ui.reminders.RemindersActivity.class);
+        startActivity(intent);
     }
 
     private void manageAppointmentReminders() {
@@ -424,6 +713,13 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        compositeDisposable.clear();
         binding = null;
+    }
+    
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.dispose();
     }
 }
