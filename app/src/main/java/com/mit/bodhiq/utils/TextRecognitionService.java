@@ -3,8 +3,10 @@ package com.mit.bodhiq.utils;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.content.Context;
+import android.util.Log;
 
 import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
@@ -20,57 +22,92 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
- * Service for text recognition and health value parsing using ML Kit
+ * Enhanced service for text recognition using ML Kit Text Recognition V2
+ * Supports both printed and handwritten text commonly found in medical reports
  */
 public class TextRecognitionService {
+    
+    private static final String TAG = "TextRecognitionService";
     
     private final TextRecognizer textRecognizer;
     private final Context context;
     
     public TextRecognitionService(Context context) {
         this.context = context;
+        // Using ML Kit Text Recognition V2 with enhanced Latin script support
+        // This model works offline and supports both printed and handwritten text
         this.textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+        Log.d(TAG, "TextRecognitionService initialized with ML Kit v2");
     }
     
     /**
-     * Extract text from image URI
+     * Extract text from image URI using ML Kit Text Recognition V2
+     * Automatically processes the image and extracts all readable text
      */
     public Single<String> extractTextFromImage(Uri imageUri) {
         return Single.fromCallable(() -> {
             try {
+                Log.d(TAG, "Starting text extraction from URI: " + imageUri);
                 InputImage image = InputImage.fromFilePath(context, imageUri);
                 return processImage(image);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to process image", e);
+                Log.e(TAG, "Failed to load image from URI", e);
+                throw new RuntimeException("Failed to process image: " + e.getMessage(), e);
             }
         }).subscribeOn(Schedulers.io());
     }
     
     /**
-     * Extract text from bitmap
+     * Extract text from bitmap using ML Kit Text Recognition V2
      */
     public Single<String> extractTextFromBitmap(Bitmap bitmap) {
         return Single.fromCallable(() -> {
+            Log.d(TAG, "Starting text extraction from bitmap");
             InputImage image = InputImage.fromBitmap(bitmap, 0);
             return processImage(image);
         }).subscribeOn(Schedulers.io());
     }
     
     /**
-     * Process image and extract text using ML Kit
+     * Process image and extract text using ML Kit Text Recognition V2
+     * Supports both printed and handwritten text
      */
     private String processImage(InputImage image) throws Exception {
+        Log.d(TAG, "Processing image with ML Kit Text Recognition V2");
+        
         return textRecognizer.process(image)
             .continueWith(task -> {
                 if (task.isSuccessful()) {
-                    String extractedText = task.getResult().getText();
-                    if (extractedText.trim().isEmpty()) {
-                        throw new RuntimeException("No text found in image. Please ensure the image is clear and contains readable text.");
+                    Text visionText = task.getResult();
+                    String extractedText = visionText.getText();
+                    
+                    if (extractedText == null || extractedText.trim().isEmpty()) {
+                        Log.w(TAG, "No text detected in image");
+                        throw new RuntimeException("No text found. Please retake the photo.");
                     }
-                    return extractedText;
+                    
+                    // Log extraction details
+                    Log.d(TAG, "Text extraction successful");
+                    Log.d(TAG, "Detected blocks: " + visionText.getTextBlocks().size());
+                    Log.d(TAG, "Extracted text length: " + extractedText.length() + " characters");
+                    
+                    // Enhanced text with block structure for better parsing
+                    StringBuilder enhancedText = new StringBuilder();
+                    for (Text.TextBlock block : visionText.getTextBlocks()) {
+                        enhancedText.append(block.getText()).append("\n");
+                    }
+                    
+                    String finalText = enhancedText.toString().trim();
+                    if (finalText.isEmpty()) {
+                        throw new RuntimeException("No text found. Please retake the photo.");
+                    }
+                    
+                    return finalText;
                 } else {
+                    Exception exception = task.getException();
+                    Log.e(TAG, "Text recognition failed", exception);
                     throw new RuntimeException("Text recognition failed: " + 
-                        (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
+                        (exception != null ? exception.getMessage() : "Unknown error"));
                 }
             }).getResult();
     }
