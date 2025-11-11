@@ -1,5 +1,6 @@
 package com.mit.bodhiq.ui.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,8 +16,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mit.bodhiq.agent.MedicalReportAgent;
+import com.mit.bodhiq.chatbot.ChatController;
 import com.mit.bodhiq.data.model.ChatMessage;
 import com.mit.bodhiq.data.model.UserProfile;
+import com.mit.bodhiq.data.repository.ProfileRepository;
 import com.mit.bodhiq.databinding.FragmentChatAgentBinding;
 import com.mit.bodhiq.ui.adapters.ChatMessageAdapter;
 import com.mit.bodhiq.utils.GeminiApiService;
@@ -49,9 +52,14 @@ public class ChatAgentFragment extends Fragment {
     @Inject
     GeminiApiService geminiApiService;
     
+    @Inject
+    ProfileRepository profileRepository;
+    
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
     private UserProfile currentUserProfile;
+    private ChatController chatController;
+    private String lastReportText;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -75,6 +83,9 @@ public class ChatAgentFragment extends Fragment {
         disposables = new CompositeDisposable();
         firebaseAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
+        
+        // Initialize ChatController
+        chatController = new ChatController(requireContext());
         
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatMessageAdapter(chatMessages);
@@ -101,19 +112,28 @@ public class ChatAgentFragment extends Fragment {
     }
 
     private void loadUserProfile() {
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser != null) {
-            firestore.collection("users")
-                    .document(currentUser.getUid())
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            currentUserProfile = documentSnapshot.toObject(UserProfile.class);
-                        }
-                    })
-                    .addOnFailureListener(e -> {
+        disposables.add(
+            profileRepository.getUserProfile()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    profile -> {
+                        currentUserProfile = profile;
+                        chatController.setUserProfile(profile);
+                    },
+                    error -> {
                         // Handle error silently, continue without profile
-                    });
+                    }
+                )
+        );
+    }
+    
+    /**
+     * Set report text from scanned/uploaded report
+     */
+    public void setReportText(String reportText) {
+        this.lastReportText = reportText;
+        if (chatController != null) {
+            chatController.setReportText(reportText);
         }
     }
 
@@ -169,16 +189,48 @@ public class ChatAgentFragment extends Fragment {
     }
 
     private void processUserMessage(String message) {
-        // Get user context for better responses
-        String userContext = buildUserContext();
-        
-        // Determine message type and route to appropriate handler
-        if (containsMedicalParameters(message)) {
-            handleMedicalParameterMessage(message, userContext);
-        } else if (containsSymptoms(message)) {
-            handleSymptomMessage(message, userContext);
-        } else {
-            handleGeneralHealthQuery(message, userContext);
+        // Process message in background using ChatController
+        new Thread(() -> {
+            try {
+                ChatMessage response = chatController.processMessage(message);
+                
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        hideTypingIndicator();
+                        addMessageToChat(response);
+                    });
+                }
+            } catch (Exception e) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        hideTypingIndicator();
+                        showErrorMessage("I encountered an error processing your message. Please try again.");
+                    });
+                }
+            }
+        }).start();
+    }
+    
+    /**
+     * Handle action button clicks (Create Reminder, Open QR, etc.)
+     */
+    private void onActionButtonClick(String actionType) {
+        switch (actionType) {
+            case "CREATE_REMINDER":
+                if (chatController.getActionHandler().executePendingReminder()) {
+                    Toast.makeText(getContext(), "Opening reminder creation...", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case "EMERGENCY_QR":
+                if (chatController.getActionHandler().executePendingEmergencyQR()) {
+                    Toast.makeText(getContext(), "Opening Emergency QR...", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case "EMERGENCY_CALL":
+                if (chatController.getActionHandler().executeEmergencyCall()) {
+                    Toast.makeText(getContext(), "Opening emergency dialer...", Toast.LENGTH_SHORT).show();
+                }
+                break;
         }
     }
     
