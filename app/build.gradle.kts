@@ -94,8 +94,8 @@ dependencies {
     implementation(libs.gson)
     
     // ML Kit for OCR - Text Recognition V2 with support for printed and handwritten text
-    implementation("com.google.mlkit:text-recognition:16.0.1")
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
+    // Using unbundled version which downloads model on first use
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     
     // Camera and Image handling
     implementation("androidx.camera:camera-core:1.3.1")

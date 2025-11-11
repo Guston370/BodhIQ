@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
@@ -35,9 +36,10 @@ public class TextRecognitionService {
     public TextRecognitionService(Context context) {
         this.context = context;
         // Using ML Kit Text Recognition V2 with enhanced Latin script support
-        // This model works offline and supports both printed and handwritten text
+        // This model downloads on first use and works offline afterwards
         this.textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
-        Log.d(TAG, "TextRecognitionService initialized with ML Kit v2");
+        Log.d(TAG, "TextRecognitionService initialized with ML Kit Text Recognition V2");
+        Log.d(TAG, "Note: Model will be downloaded on first use if not already present");
     }
     
     /**
@@ -75,15 +77,23 @@ public class TextRecognitionService {
     private String processImage(InputImage image) throws Exception {
         Log.d(TAG, "Processing image with ML Kit Text Recognition V2");
         
-        return textRecognizer.process(image)
-            .continueWith(task -> {
-                if (task.isSuccessful()) {
-                    Text visionText = task.getResult();
+        // Use a CountDownLatch to wait for the async task to complete
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final String[] result = new String[1];
+        final Exception[] error = new Exception[1];
+        
+        Task<Text> task = textRecognizer.process(image);
+        
+        task.addOnSuccessListener(visionText -> {
+                try {
+                    Log.d(TAG, "ML Kit processing completed successfully");
                     String extractedText = visionText.getText();
                     
                     if (extractedText == null || extractedText.trim().isEmpty()) {
                         Log.w(TAG, "No text detected in image");
-                        throw new RuntimeException("No text found. Please retake the photo.");
+                        error[0] = new RuntimeException("No text found in the image. Please ensure:\n• The image is clear and well-lit\n• Text is readable and not blurry\n• The document is properly aligned");
+                        latch.countDown();
+                        return;
                     }
                     
                     // Log extraction details
@@ -99,17 +109,62 @@ public class TextRecognitionService {
                     
                     String finalText = enhancedText.toString().trim();
                     if (finalText.isEmpty()) {
-                        throw new RuntimeException("No text found. Please retake the photo.");
+                        error[0] = new RuntimeException("No text found in the image. Please ensure:\n• The image is clear and well-lit\n• Text is readable and not blurry\n• The document is properly aligned");
+                    } else {
+                        result[0] = finalText;
+                        Log.d(TAG, "Successfully extracted " + finalText.length() + " characters");
                     }
-                    
-                    return finalText;
-                } else {
-                    Exception exception = task.getException();
-                    Log.e(TAG, "Text recognition failed", exception);
-                    throw new RuntimeException("Text recognition failed: " + 
-                        (exception != null ? exception.getMessage() : "Unknown error"));
+                } catch (Exception e) {
+                    Log.e(TAG, "Error processing text result", e);
+                    error[0] = new RuntimeException("Error processing text: " + e.getMessage(), e);
+                } finally {
+                    latch.countDown();
                 }
-            }).getResult();
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Text recognition failed", e);
+                String errorMessage = e.getMessage();
+                
+                // Provide user-friendly error messages
+                if (errorMessage != null) {
+                    if (errorMessage.contains("not yet complete") || errorMessage.contains("Task is not yet complete")) {
+                        error[0] = new RuntimeException("ML Kit model is downloading. Please wait a moment and try again.\n\nThis only happens on first use.");
+                    } else if (errorMessage.contains("MlKitException") || errorMessage.contains("model")) {
+                        error[0] = new RuntimeException("ML Kit model error. Please ensure you have an internet connection for first-time model download.");
+                    } else if (errorMessage.contains("OutOfMemory")) {
+                        error[0] = new RuntimeException("Image is too large. Please try with a smaller image.");
+                    } else {
+                        error[0] = new RuntimeException("Text extraction failed: " + errorMessage);
+                    }
+                } else {
+                    error[0] = new RuntimeException("Text extraction failed. Please try again.");
+                }
+                
+                latch.countDown();
+            });
+        
+        // Wait for the task to complete (with timeout)
+        try {
+            boolean completed = latch.await(30, java.util.concurrent.TimeUnit.SECONDS);
+            if (!completed) {
+                throw new RuntimeException("Text extraction timed out. Please try again.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Text extraction was interrupted", e);
+        }
+        
+        // Check for errors
+        if (error[0] != null) {
+            throw error[0];
+        }
+        
+        // Return result
+        if (result[0] == null) {
+            throw new RuntimeException("Text extraction failed. Please try again.");
+        }
+        
+        return result[0];
     }
     
     /**
@@ -257,6 +312,28 @@ public class TextRecognitionService {
         suggestions.append("Note: This is an automated analysis. Please consult with your healthcare provider for proper medical interpretation.");
         
         return suggestions.toString();
+    }
+    
+    /**
+     * Pre-download the ML Kit model (optional, for better UX)
+     * Call this when the app starts to download the model in advance
+     */
+    public void downloadModelIfNeeded() {
+        Log.d(TAG, "Checking ML Kit model availability...");
+        
+        // Create a small dummy image to trigger model download
+        Bitmap dummyBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        InputImage dummyImage = InputImage.fromBitmap(dummyBitmap, 0);
+        
+        textRecognizer.process(dummyImage)
+            .addOnSuccessListener(text -> {
+                Log.d(TAG, "ML Kit model is ready");
+                dummyBitmap.recycle();
+            })
+            .addOnFailureListener(e -> {
+                Log.w(TAG, "ML Kit model download may be needed: " + e.getMessage());
+                dummyBitmap.recycle();
+            });
     }
     
     /**
