@@ -343,7 +343,7 @@
     <string name="include_app_logo">Include App Logo</string>
     <string name="add_logo_overlay">Add logo overlay to QR code</string>
     <string name="options">Options</string>
-    <string name="payload_size_info">Payload size: %d bytes (%.1f KB)</string>
+    <string name="payload_size_info" formatted="false">Payload size: %d bytes (%.1f KB)</string>
     <string name="qr_accessibility_desc">QR code contains emergency information for %s</string>
     <string name="share_emergency_qr_title">Share Emergency QR Code</string>
     <string name="emergency_qr_share_text">Emergency QR Code for %s</string>

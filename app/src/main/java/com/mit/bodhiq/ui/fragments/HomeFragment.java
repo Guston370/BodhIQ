@@ -5,7 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android:view.ViewGroup;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -184,12 +184,6 @@ public class HomeFragment extends Fragment {
         navigateToTab(R.id.nav_profile);
     }
     
-    private void setupHomeContent() {
-        // Setup quick action buttons
-        binding.btnViewReports.setOnClickListener(v -> navigateToReports());
-        binding.btnStartChat.setOnClickListener(v -> navigateToChat());
-    }
-    
     private void navigateToTab(int tabId) {
         if (getActivity() instanceof com.mit.bodhiq.MainActivity) {
             com.mit.bodhiq.MainActivity mainActivity = (com.mit.bodhiq.MainActivity) getActivity();
@@ -197,14 +191,6 @@ public class HomeFragment extends Fragment {
                     mainActivity.findViewById(R.id.bottom_navigation);
             bottomNav.setSelectedItemId(tabId);
         }
-    }
-    
-    private void navigateToReports() {
-        navigateToTab(R.id.nav_reports);
-    }
-    
-    private void navigateToChat() {
-        navigateToTab(R.id.nav_chat);
     }
 
     @Override
