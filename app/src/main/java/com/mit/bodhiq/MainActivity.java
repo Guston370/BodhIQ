@@ -32,12 +32,6 @@ import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-
-/**
- * MainActivity - Main app container with bottom navigation
- * Manages fragment switching and user authentication state
- * Contains: HomeFragment, ReportsFragment, ChatAgentFragment, ProfileFragment
- */
 @AndroidEntryPoint
 public class MainActivity extends BaseActivity {
 

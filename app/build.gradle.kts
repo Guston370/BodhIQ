@@ -97,6 +97,17 @@ dependencies {
     // Using unbundled version which downloads model on first use
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     
+    // OpenCV for Android - image preprocessing (grayscale, denoise, deskew, binarization)
+    // Note: OpenCV requires manual integration. For now, commenting out to fix build.
+    // TODO: Add OpenCV Android SDK manually or use alternative: implementation("com.quickbirdstudios:opencv:4.5.3.0")
+    // implementation("com.quickbirdstudios:opencv:4.5.3.0")
+    
+    // TensorFlow Lite for custom OCR models
+    // Note: Commented out temporarily - not needed for emergency contact feature
+    // TODO: Re-enable when OCR enhancement is fully integrated
+    // implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    // implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    
     // Camera and Image handling
     implementation("androidx.camera:camera-core:1.3.1")
     implementation("androidx.camera:camera-camera2:1.3.1")

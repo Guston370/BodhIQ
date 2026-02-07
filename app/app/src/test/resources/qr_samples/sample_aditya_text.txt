@@ -1,0 +1,7 @@
+Name: Aditya Joshi
+Age: 29
+Blood Type: O+
+Allergies: Penicillin
+Conditions: Type 2 Diabetes
+Emergency Contact: Dilip Panchal +91-98123XXXXX
+Note: Carries insulin. Call emergency contact first.

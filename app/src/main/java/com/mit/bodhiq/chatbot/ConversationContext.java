@@ -65,4 +65,25 @@ public class ConversationContext {
         conversationHistory.clear();
         lastTopic = null;
     }
+    
+    /**
+     * Get recent messages as a formatted string for context
+     * @param count Number of recent messages to include
+     * @return Formatted string of recent messages
+     */
+    public String getRecentMessagesAsString(int count) {
+        if (conversationHistory.isEmpty()) {
+            return "";
+        }
+        
+        int startIndex = Math.max(0, conversationHistory.size() - count);
+        List<String> recentMessages = conversationHistory.subList(startIndex, conversationHistory.size());
+        
+        StringBuilder sb = new StringBuilder();
+        for (String message : recentMessages) {
+            sb.append(message).append("\n");
+        }
+        
+        return sb.toString().trim();
+    }
 }

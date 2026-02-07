@@ -1,0 +1,41 @@
+{
+    "patientDetails": {
+        "name": "John Doe",
+        "age": "45",
+        "gender": "Male",
+        "patientId": "MRN-12345",
+        "doctorName": "Dr. Sarah Johnson"
+    },
+    "labResults": [
+        {
+            "name": "Hemoglobin",
+            "value": "13.5",
+            "unit": "g/dl",
+            "referenceRange": "12.0-16.0",
+            "confidence": 0.9,
+            "flag": "NORMAL",
+            "fieldType": "LAB_RESULT"
+        },
+        {
+            "name": "Glucose",
+            "value": "105",
+            "unit": "mg/dl",
+            "referenceRange": "70-140",
+            "confidence": 0.85,
+            "flag": "NORMAL",
+            "fieldType": "LAB_RESULT"
+        },
+        {
+            "name": "Cholesterol",
+            "value": "185",
+            "unit": "mg/dl",
+            "referenceRange": "<200",
+            "confidence": 0.88,
+            "flag": "NORMAL",
+            "fieldType": "LAB_RESULT"
+        }
+    ],
+    "medications": [],
+    "overallConfidence": 0.87,
+    "rawText": "MEDICAL REPORT\\n\\nPatient Name: John Doe\\nAge: 45 years\\nGender: Male\\nPatient ID: MRN-12345\\n\\nLABORATORY RESULTS\\n\\nHemoglobin: 13.5 g/dl (Normal: 12.0-16.0)\\nGlucose: 105 mg/dl (Normal: 70-140)\\nCholesterol: 185 mg/dl (Normal: <200)\\nWBC: 7500 cells/μl (Normal: 4000-11000)\\n\\nMEDICATIONS\\nTablet Metformin 500mg\\nCapsule Vitamin D3\\n\\nDoctor: Dr. Sarah Johnson\\nDate: 2025-11-26\\n"
+}

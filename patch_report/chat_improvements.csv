@@ -1,0 +1,3 @@
+file_path,class_method,line_range,summary
+e:\BodhIQ\app\src\main\res\layout\item_chat_typing_indicator.xml,(new layout),1-70,"Created typing indicator with animated dots for AI responses"
+e:\BodhIQ\app\src\main\res\layout\item_chat_error.xml,(new layout),1-70,"Created error message bubble for failed AI responses with warning icon"

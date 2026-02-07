@@ -1,0 +1,46 @@
+{
+  "test_id": 1,
+  "timestamp": "2025-11-27T12:00:05Z",
+  "success": true,
+  "duration_ms": 1250,
+  "response": {
+    "extracted": {
+      "presenting_symptoms": ["general malaise", "feeling unwell"],
+      "onset": "current",
+      "duration": "not specified",
+      "severity": "mild",
+      "associated_symptoms": [],
+      "vitals_if_provided": "",
+      "meds": "",
+      "allergies": "",
+      "history": ""
+    },
+    "triage": {
+      "urgency": "routine",
+      "reasons": [
+        "Vague symptoms without specific red flags",
+        "No indication of severe or life-threatening condition",
+        "Appropriate for self-monitoring and routine care"
+      ]
+    },
+    "suggestions": {
+      "immediate_actions": [
+        "Rest and stay hydrated",
+        "Monitor symptoms for changes",
+        "Take over-the-counter fever reducer if needed",
+        "Seek care if symptoms worsen or new symptoms develop"
+      ],
+      "red_flag_wording": "",
+      "recommended_specialist": "Primary Care Physician if symptoms persist beyond 2-3 days",
+      "tests_to_consider": []
+    },
+    "confidence_score": 0.75,
+    "disclaimer": "This is not a diagnosis. Consult a healthcare provider if symptoms persist or worsen."
+  },
+  "ui_display": {
+    "urgency_level": "routine",
+    "severity": "MEDIUM",
+    "message_displayed": true,
+    "stuck_at_analyzing": false
+  }
+}

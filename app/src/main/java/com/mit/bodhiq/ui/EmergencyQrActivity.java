@@ -176,42 +176,19 @@ public class EmergencyQrActivity extends AppCompatActivity {
         
         // Generate payload in background
         new Thread(() -> {
-            // Try full payload first
+            // Generate plaintext payload
             currentPayload = EmergencyPayloadBuilder.build(currentUserProfile);
-            final int[] payloadSizeHolder = {EmergencyPayloadBuilder.getPayloadSize(currentPayload)};
-            
-            // If too large, use compact version
-            if (EmergencyPayloadBuilder.exceedsSizeLimit(currentPayload)) {
-                currentPayload = EmergencyPayloadBuilder.buildCompact(currentUserProfile);
-                payloadSizeHolder[0] = EmergencyPayloadBuilder.getPayloadSize(currentPayload);
-                
-                // If still too large, show error
-                if (EmergencyPayloadBuilder.exceedsSizeLimit(currentPayload)) {
-                    final int finalSize = payloadSizeHolder[0];
-                    runOnUiThread(() -> {
-                        binding.layoutLoading.setVisibility(View.GONE);
-                        showSizeLimitDialog(finalSize);
-                    });
-                    return;
-                }
-                
-                // Notify user that compact version is used
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Using compact format to fit QR size limit", 
-                        Toast.LENGTH_LONG).show();
-                });
-            }
+            final int payloadSize = EmergencyPayloadBuilder.getPayloadSize(currentPayload);
             
             // Generate QR code
             final int qrSize = QrUtil.getRecommendedSize(currentPayload);
             currentQrBitmap = QrUtil.generate(currentPayload, qrSize, includeLogo, this);
-            final int finalPayloadSize = payloadSizeHolder[0];
             
             runOnUiThread(() -> {
                 binding.layoutLoading.setVisibility(View.GONE);
                 if (currentQrBitmap != null) {
-                    displayQrCode(finalPayloadSize);
-                    saveQrMetadata(finalPayloadSize, qrSize);
+                    displayQrCode(payloadSize);
+                    saveQrMetadata(payloadSize, qrSize);
                 } else {
                     Toast.makeText(this, "Failed to generate QR code", Toast.LENGTH_SHORT).show();
                 }
@@ -225,9 +202,9 @@ public class EmergencyQrActivity extends AppCompatActivity {
         binding.btnGenerateQr.setVisibility(View.GONE);
         binding.layoutActions.setVisibility(View.VISIBLE);
         
-        // Show payload info with schema version
-        String sizeText = String.format("Payload: %d bytes (%.1f KB) | Schema: %s", 
-            payloadSize, payloadSize / 1024.0, EmergencyPayloadBuilder.getSchemaVersion());
+        // Show payload info
+        String sizeText = String.format("Payload: %d bytes (%.1f KB)", 
+            payloadSize, payloadSize / 1024.0);
         binding.tvPayloadSize.setText(sizeText);
         binding.tvPayloadSize.setVisibility(View.VISIBLE);
         
@@ -410,7 +387,7 @@ public class EmergencyQrActivity extends AppCompatActivity {
             String payloadHash = String.valueOf(currentPayload.hashCode());
             com.mit.bodhiq.data.model.EmergencyQrMeta meta = new com.mit.bodhiq.data.model.EmergencyQrMeta(
                 System.currentTimeMillis(),
-                "json",
+                "plaintext",
                 payloadHash,
                 includeLogo,
                 qrSize

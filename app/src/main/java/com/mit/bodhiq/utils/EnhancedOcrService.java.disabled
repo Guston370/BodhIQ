@@ -1,0 +1,306 @@
+package com.mit.bodhiq.utils;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
+import android.net.Uri;
+import android.util.Log;
+
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.mit.bodhiq.data.model.OcrLine;
+import com.mit.bodhiq.data.model.OcrResult;
+import com.mit.bodhiq.data.model.OcrToken;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
+/**
+ * Enhanced OCR service with preprocessing and confidence extraction
+ * Wraps ML Kit TextRecognizer with ImagePreprocessor for improved accuracy
+ */
+public class EnhancedOcrService {
+    
+    private static final String TAG = "EnhancedOcrService";
+    
+    private final Context context;
+    private final TextRecognizer textRecognizer;
+    private final ImagePreprocessor imagePreprocessor;
+    private final TextRecognitionService fallbackService; // Legacy service as fallback
+    
+    private boolean usePreprocessing = true;
+    
+    public EnhancedOcrService(Context context) {
+        this.context = context;
+        this.textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+        this.imagePreprocessor = new ImagePreprocessor();
+        this.fallbackService = new TextRecognitionService(context);
+        
+        Log.d(TAG, "Enhanced OCR Service initialized");
+    }
+    
+    /**
+     * Recognize text from URI with optional preprocessing
+     */
+    public Single<OcrResult> recognizeFromUri(Uri imageUri, boolean usePreprocessing) {
+        return Single.fromCallable(() -> {
+            try {
+                InputImage image = InputImage.fromFilePath(context, imageUri);
+                return recognizeSync(image, usePreprocessing);
+            } catch (IOException e) {
+                throw new Runtime Exception("Failed to load image", e);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+    
+    /**
+     * Recognize text from bitmap with optional preprocessing
+     */
+    public Single<OcrResult> recognizeFromBitmap(Bitmap bitmap, boolean usePreprocessing) {
+        return Single.fromCallable(() -> {
+            InputImage image = InputImage.fromBitmap(bitmap, 0);
+            return recognizeSync(image, usePreprocessing);
+        }).subscribeOn(Schedulers.io());
+    }
+    
+    /**
+     * Synchronous recognition with preprocessing
+     */
+    public OcrResult recognizeSync(InputImage inputImage, boolean usePreprocessing) throws Exception {
+        long startTime = System.currentTimeMillis();
+        
+        // Step 1: Preprocess if enabled
+        Bitmap processedBitmap = null;
+        if (usePreprocessing && inputImage.getBitmapInternal() != null) {
+            Log.d(TAG, "Applying preprocessing...");
+            processedBitmap = imagePreprocessor.preprocessFull(inputImage.getBitmapInternal());
+            inputImage = InputImage.fromBitmap(processedBitmap, 0);
+        }
+        
+        // Step 2: Run ML Kit recognition
+        Log.d(TAG, "Running ML Kit text recognition...");
+        Text mlKitResult = recognizeSyncInternal(inputImage);
+        
+        if (mlKitResult == null) {
+            throw new Exception("ML Kit recognition returned null");
+        }
+        
+        // Step 3: Extract tokens with confidence
+        List<OcrToken> tokens = extractTokensWithConfidence(mlKitResult);
+        List<OcrLine> lines = extractLines(mlKitResult);
+        
+        // Step 4: Build result
+        OcrResult result = new OcrResult();
+        result.setRawText(mlKitResult.getText());
+        result.setTokens(tokens);
+        result.setLines(lines);
+        result.setOverallConfidence(calculateOverallConfidence(tokens));
+        result.setRecognitionTimeMs(System.currentTimeMillis() - startTime);
+        
+        Log.d(TAG, String.format("Recognition complete: %d tokens, %d lines, %.2f%% confidence, %dms",
+            tokens.size(), lines.size(), result.getOverallConfidence() * 100, result.getRecognitionTimeMs()));
+        
+        return result;
+    }
+    
+    /**
+     * Synchronous ML Kit recognition (internal)
+     */
+    private Text recognizeSyncInternal(InputImage image) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Text[] result = new Text[1];
+        final Exception[] error = new Exception[1];
+        
+        Task<Text> task = textRecognizer.process(image);
+        
+        task.addOnSuccessListener(visionText -> {
+            result[0] = visionText;
+            latch.countDown();
+        }).addOnFailureListener(e -> {
+            error[0] = new Exception("ML Kit recognition failed: " + e.getMessage(), e);
+            latch.countDown();
+        });
+        
+        // Wait for completion
+        boolean completed = latch.await(30, TimeUnit.SECONDS);
+        if (!completed) {
+            throw new Exception("ML Kit recognition timed out");
+        }
+        
+        if (error[0] != null) {
+            throw error[0];
+        }
+        
+        return result[0];
+    }
+    
+    /**
+     * Extract tokens with confidence from ML Kit result
+     * ML Kit provides confidence at element/block level, we approximate for words
+     */
+    private List<OcrToken> extractTokensWithConfidence(Text mlKitResult) {
+        List<OcrToken> tokens = new ArrayList<>();
+        int position = 0;
+        
+        for (Text.TextBlock block : mlKitResult.getTextBlocks()) {
+            // Get block-level confidence (if available)
+            float blockConfidence = getBlockConfidence(block);
+            
+            for (Text.Line line : block.getLines()) {
+                for (Text.Element element : line.getElements()) {
+                    String text = element.getText();
+                    
+                    // Approximate word confidence from element confidence
+                    float confidence = estimateWordConfidence(element, blockConfidence);
+                    
+                    // Get bounding box
+                    Rect boundingBox = element.getBoundingBox();
+                    
+                    OcrToken token = new OcrToken(text, confidence, boundingBox);
+                    token.setPosition(position);
+                    tokens.add(token);
+                    
+                    position += text.length() + 1; // +1 for space
+                }
+            }
+        }
+        
+        return tokens;
+    }
+    
+    /**
+     * Extract lines from ML Kit result
+     */
+    private List<OcrLine> extractLines(Text mlKitResult) {
+        List<OcrLine> lines = new ArrayList<>();
+        
+        for (Text.TextBlock block : mlKitResult.getTextBlocks()) {
+            for (Text.Line line : block.getLines()) {
+                String text = line.getText();
+                Rect boundingBox = line.getBoundingBox();
+                
+                // Extract tokens for this line
+                List<OcrToken> lineTokens = new ArrayList<>();
+                for (Text.Element element : line.getElements()) {
+                    float confidence = estimateWordConfidence(element, getBlockConfidence(block));
+                    OcrToken token = new OcrToken(element.getText(), confidence, element.getBoundingBox());
+                    lineTokens.add(token);
+                }
+                
+                OcrLine ocrLine = new OcrLine(text, lineTokens, boundingBox);
+                lines.add(ocrLine);
+            }
+        }
+        
+        return lines;
+    }
+    
+    /**
+     * Get block-level confidence
+     * Note: ML Kit may not provide explicit confidence, we use heuristics
+     */
+    private float getBlockConfidence(Text.TextBlock block) {
+        // ML Kit doesn't expose confidence directly in the public API
+        // We use a heuristic based on text characteristics
+        String text = block.getText();
+        
+        // Basic heuristic: longer, properly formatted text = higher confidence
+        if (text.length() < 3) return 0.6f;
+        if (text.matches(".*[0-9]+.*")) return 0.75f; // Numbers often reliable
+        if (text.matches("[A-Z][a-z]+")) return 0.8f; // Proper capitalization
+        
+        return 0.7f; // Default moderate confidence
+    }
+    
+    /**
+     * Estimate word-level confidence from element
+     * Since ML Kit doesn't expose per-word confidence, we approximate
+     */
+    private float estimateWordConfidence(Text.Element element, float blockConfidence) {
+        String text = element.getText();
+        
+        // Adjust based on text characteristics
+        float adjustment = 0.0f;
+        
+        // Penalize very short words
+        if (text.length() == 1) adjustment -= 0.1f;
+        
+        // Boost words with consistent formatting
+        if (text.matches("^[A-Za-z]+$")) adjustment += 0.05f; // Pure alphabetic
+        if (text.matches("^[0-9]+$")) adjustment += 0.1f;  // Pure numeric
+        
+        // Penalize words with mixed case oddly
+        if (text.matches(".*[a-z][A-Z].*")) adjustment -= 0.15f;
+        
+        float confidence = blockConfidence + adjustment;
+        
+        // Clamp between 0 and 1
+        return Math.max(0.0f, Math.min(1.0f, confidence));
+    }
+    
+    /**
+     * Calculate overall confidence from all tokens
+     */
+    private float calculateOverallConfidence(List<OcrToken> tokens) {
+        if (tokens == null || tokens.isEmpty()) {
+            return 0.0f;
+        }
+        
+        float sum = 0;
+        int count = 0;
+        
+        for (OcrToken token : tokens) {
+            if (token.hasConfidence()) {
+                sum += token.getConfidence();
+                count++;
+            }
+        }
+        
+        return count > 0 ? sum / count : 0.0f;
+    }
+    
+    /**
+     * Enable/disable preprocessing
+     */
+    public void setUsePreprocessing(boolean usePreprocessing) {
+        this.usePreprocessing = usePreprocessing;
+    }
+    
+    public boolean isUsePreprocessing() {
+        return usePreprocessing;
+    }
+    
+    /**
+     * Fallback to legacy service if enhanced service fails
+     */
+    public Single<String> recognizeWithFallback(Uri imageUri) {
+        return recognizeFromUri(imageUri, usePreprocessing)
+            .map(OcrResult::getRawText)
+            .onErrorResumeNext(error -> {
+                Log.w(TAG, "Enhanced OCR failed, falling back to legacy service", error);
+                return fallbackService.extractTextFromImage(imageUri);
+            });
+    }
+    
+    /**
+     * Cleanup resources
+     */
+    public void cleanup() {
+        if (textRecognizer != null) {
+            textRecognizer.close();
+        }
+        if (fallbackService != null) {
+            fallbackService.cleanup();
+        }
+    }
+}

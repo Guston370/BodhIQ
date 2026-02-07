@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "project": "BodhIQ",
+    "date": "2025-11-14",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "BodhIQ is an AI-powered Android medical agent app designed to assist users in managing health information, scanning medical reports with OCR and AI analysis, scheduling medicine reminders, generating emergency QR codes, and accessing advanced pharmaceutical intelligence via a multi-agent AI system. It supports secure authentication, local data persistence, and offers empathic conversational AI for medical queries.",
+  "core_goals": [
+    "Provide secure, seamless user authentication and session management.",
+    "Enable accurate and fast OCR-based medical report scanning with AI-driven analysis.",
+    "Facilitate reliable medicine reminders with interactive notifications and persistence after device reboot.",
+    "Allow users to generate and control emergency medical QR codes in a standardized format.",
+    "Deliver an empathic and context-aware AI chatbot for medical questions and document analysis.",
+    "Offer comprehensive pharmaceutical research through a multi-agent AI architecture.",
+    "Support user health tracking including history, wellness goals, and health metrics calculation."
+  ],
+  "key_features": [
+    "Secure Firebase Authentication with Email/Password and Google Sign-In integration.",
+    "OCR scanning of medical reports using ML Kit Text Recognition and AI analysis with Google Gemini API.",
+    "Scheduled medicine reminders with notifications, exact alarms, and boot persistence.",
+    "Emergency QR code generation following the medical-agent.v1 schema with customizable data.",
+    "AI-powered medical chatbot with conversational context, document analysis, and emergency detection.",
+    "Multi-agent pharmaceutical intelligence system providing clinical trials, patents, market insights, and trade data.",
+    "Health tracking capabilities including health history storage, wellness goal monitoring, and BMI calculation."
+  ],
+  "user_flow_summary": [
+    "User onboarding with splash screen, registration, and session persistence.",
+    "Returning user automatic login and seamless access to main functionality.",
+    "Google Sign-In authentication flow with Google account selection.",
+    "Medical report scanning flow including camera capture, OCR processing, AI analysis, and report saving.",
+    "Medicine reminder setup, notification delivery, and interactive actions like take, snooze, and dismiss.",
+    "Emergency QR code generation with user selection of medical info and QR code sharing.",
+    "External emergency QR code scanning displaying human-readable and structured data.",
+    "AI chatbot interaction flow supporting health queries, empathic responses, and emergency detection.",
+    "Medical document upload and AI-powered analysis through the chatbot.",
+    "Pharmaceutical research with query delegation to specialized AI agents and report generation.",
+    "Password reset process via email link handling.",
+    "User logout clearing session and local preferences with redirection to login."
+  ],
+  "validation_criteria": [
+    "Authentication must support email/password and Google Sign-In with proper error handling and session persistence.",
+    "OCR text extraction from medical reports must be accurate and processed within 5 seconds.",
+    "Medicine reminders must trigger notifications on time with support for snooze, dismiss, and take actions.",
+    "Generated emergency QR codes must conform to medical-agent.v1 schema, be scannable by generic readers, and show critical information clearly.",
+    "AI chatbot responses must be medically accurate, empathic, and maintain conversation context.",
+    "Pharmaceutical intelligence agents must provide relevant and up-to-date data with comprehensive reports.",
+    "Health tracking data must be stored correctly with accurate BMI calculations and clear visualization.",
+    "Security requirements including encrypted storage, secure network communications, and HIPAA considerations must be met.",
+    "Performance targets such as app launch time under 3 seconds and chatbot response under 10 seconds must be achieved.",
+    "All features must be covered by unit, UI, and integration tests with traceable acceptance criteria."
+  ],
+  "code_summary": {
+    "project_name": "BodhIQ",
+    "project_type": "Android Mobile Application",
+    "description": "Medical agent Android app with AI-powered health management features including medical report scanning, medicine reminders, emergency QR codes, and pharmaceutical intelligence",
+    "tech_stack": {
+      "platform": "Android",
+      "language": "Java",
+      "min_sdk": 24,
+      "target_sdk": 36,
+      "build_system": "Gradle (Kotlin DSL)",
+      "architecture": "MVVM with Repository Pattern",
+      "dependency_injection": "Hilt",
+      "database": "Room with RxJava3",
+      "authentication": "Firebase Auth with Google Sign-In",
+      "backend": "Firebase (Firestore, Storage)",
+      "ai_services": [
+        "Google AI Gemini API",
+        "ML Kit Text Recognition (OCR)"
+      ],
+      "key_libraries": [
+        "AndroidX (AppCompat, Fragment, Navigation, RecyclerView)",
+        "Firebase BOM 32.7.0",
+        "RxJava3 & RxAndroid",
+        "CameraX",
+        "Glide (Image Loading)",
+        "ZXing (QR Code Generation)",
+        "Retrofit & OkHttp",
+        "DataStore Preferences",
+        "Gson"
+      ]
+    },
+    "features": [
+      {
+        "name": "Authentication",
+        "description": "User authentication with Firebase and Google Sign-In",
+        "components": [
+          "SplashActivity",
+          "LoginActivity",
+          "SignUpActivity",
+          "ForgotPasswordActivity"
+        ],
+        "key_classes": [
+          "AuthManager",
+          "GoogleSignInDiagnostics",
+          "LogoutManager"
+        ]
+      },
+      {
+        "name": "Medical Report Scanning",
+        "description": "OCR-based medical report scanning and analysis using ML Kit",
+        "components": [
+          "TextResultActivity",
+          "ReportDetailsActivity"
+        ],
+        "key_classes": [
+          "TextRecognitionService",
+          "MedicalTextAnalyzer",
+          "DocumentAnalyzer",
+          "MedicalReportAgent"
+        ]
+      },
+      {
+        "name": "Medicine Reminders",
+        "description": "Scheduled medicine reminders with notifications and alarm management",
+        "components": [
+          "RemindersActivity"
+        ],
+        "key_classes": [
+          "ReminderReceiver",
+          "NotificationActionReceiver",
+          "BootReceiver",
+          "ReminderScheduler"
+        ],
+        "permissions": [
+          "POST_NOTIFICATIONS",
+          "SCHEDULE_EXACT_ALARM",
+          "USE_EXACT_ALARM",
+          "RECEIVE_BOOT_COMPLETED",
+          "WAKE_LOCK"
+        ]
+      },
+      {
+        "name": "Emergency QR Code",
+        "description": "Generate emergency medical information QR codes with patient data",
+        "components": [
+          "EmergencyQrActivity"
+        ],
+        "key_classes": [
+          "EmergencyPayloadBuilder",
+          "EmergencyQrValidator",
+          "QrUtil"
+        ],
+        "schema": "medical-agent.v1"
+      },
+      {
+        "name": "AI Medical Chatbot",
+        "description": "Conversational AI chatbot for medical queries and document analysis",
+        "key_classes": [
+          "ChatController",
+          "ActionHandler",
+          "ConversationContext",
+          "EmergencyDetector",
+          "EmpathicMedicalResponseGenerator",
+          "EmpathicResponseBuilder"
+        ]
+      },
+      {
+        "name": "Pharmaceutical Intelligence",
+        "description": "Multi-agent system for pharmaceutical research and insights",
+        "agents": [
+          "MasterAgent",
+          "PharmaceuticalAgent",
+          "ClinicalTrialsAgent",
+          "PatentLandscapeAgent",
+          "MarketInsightsAgent",
+          "InternalInsightsAgent",
+          "EximTradeAgent",
+          "WebIntelligenceAgent",
+          "ReportGeneratorAgent"
+        ]
+      },
+      {
+        "name": "Health Tracking",
+        "description": "Track health history and wellness goals",
+        "key_classes": [
+          "HealthHistoryItem",
+          "WellnessGoal",
+          "BMICalculator"
+        ]
+      }
+    ],
+    "data_layer": {
+      "database": "Room Database",
+      "repositories": "Repository Pattern with RxJava3",
+      "preferences": "DataStore Preferences",
+      "cloud_storage": "Firebase Firestore & Storage"
+    },
+    "permissions": [
+      "INTERNET",
+      "ACCESS_NETWORK_STATE",
+      "CAMERA",
+      "READ_EXTERNAL_STORAGE",
+      "WRITE_EXTERNAL_STORAGE",
+      "POST_NOTIFICATIONS",
+      "SCHEDULE_EXACT_ALARM",
+      "USE_EXACT_ALARM",
+      "RECEIVE_BOOT_COMPLETED",
+      "WAKE_LOCK"
+    ],
+    "testing": {
+      "unit_tests": "JUnit, Robolectric, Mockito",
+      "instrumentation_tests": "AndroidX Test, Espresso",
+      "integration_test_activity": "IntegrationTestActivity"
+    }
+  }
+}

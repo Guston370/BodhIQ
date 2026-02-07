@@ -1,0 +1,37 @@
+=== PARSE ERRORS LOG ===
+Date: 2025-11-27
+Test: Chatbot Response Parsing
+
+No parse errors detected.
+
+The issue was not with parsing - the Gemini API response parsing works correctly.
+The root cause was that the API was never called in the first place.
+
+PARSING FLOW (Working Correctly):
+1. GeminiApiService receives response from Gemini API
+2. Response text extracted: result.getText()
+3. JSON markers removed: replace("```json", "").replace("```", "")
+4. JSON extracted: substring(firstBrace, lastBrace + 1)
+5. Gson parsing: gson.fromJson(jsonStr, TriageResponse.class)
+6. Validation: Check triage != null && urgency != null
+7. Confidence check: If < 0.6, retry with stricter prompt
+8. Success: Return TriageResponse to callback
+
+VALIDATION CHECKS:
+✅ Response not null
+✅ Response not empty
+✅ Valid JSON structure
+✅ Required fields present (triage.urgency)
+✅ Confidence score validated
+✅ Retry logic for low confidence
+✅ Fallback for parse failures
+
+ERROR HANDLING:
+✅ Empty response → Retry
+✅ No valid JSON → Retry
+✅ Parse exception → Retry
+✅ Missing fields → Retry
+✅ All retries fail → Conservative fallback (urgency=urgent)
+
+The parsing pipeline is robust and working as designed.
+The fix was needed in the UI layer to actually trigger the API call.

@@ -1,0 +1,41 @@
+{
+  "few_shot_examples": [
+    {
+      "id": 1,
+      "category": "EMERGENCY",
+      "input": "I can't breathe properly and have severe chest pain",
+      "output_urgency": "emergency",
+      "key_features": [
+        "Chest pain + breathing difficulty",
+        "Potential cardiac/pulmonary emergency",
+        "Immediate 911 call required"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "URGENT",
+      "input": "High fever of 40°C for 2 days with severe headache and stiff neck",
+      "output_urgency": "urgent",
+      "key_features": [
+        "Classic meningitis triad",
+        "Requires urgent evaluation within hours",
+        "Potential bacterial infection"
+      ]
+    },
+    {
+      "id": 3,
+      "category": "ROUTINE",
+      "input": "Mild sore throat for 1 day, no fever",
+      "output_urgency": "routine",
+      "key_features": [
+        "Mild symptoms",
+        "Likely viral and self-limiting",
+        "Home care appropriate"
+      ]
+    }
+  ],
+  "variance_teaching": {
+    "purpose": "These examples teach the model to produce different urgency levels based on symptom severity",
+    "expected_behavior": "Model should map similar inputs to similar urgency levels but vary responses for different severity"
+  }
+}
