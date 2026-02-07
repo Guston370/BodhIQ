@@ -1,0 +1,189 @@
+package com.mit.bodhiq.utils;
+
+import android.util.Log;
+
+import com.mit.bodhiq.data.model.OcrLine;
+import com.mit.bodhiq.data.model.OcrResult;
+import com.mit.bodhiq.data.model.OcrToken;
+import com.mit.bodhiq.data.model.ParsedReport;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Medical-aware field extraction from OCR results
+ * Extracts structured fields like patient details, lab tests, medications
+ */
+public class MedicalFieldExtractor {
+    
+    private static final String TAG = "MedicalFieldExtractor";
+    
+    /**
+     * Extract structured report from OCR result
+     */
+    public ParsedReport extract(OcrResult ocrResult) {
+        if (ocrResult == null || ocrResult.getRawText() == null) {
+            return new ParsedReport();
+        }
+        
+        String rawText = ocrResult.getRawText();
+        List<OcrToken> tokens = ocrResult.getTokens();
+        List<OcrLine> lines = ocrResult.getLines();
+        
+        ParsedReport report = new ParsedReport();
+        report.setRawText(rawText);
+        report.setOverallConfidence(ocrResult.getOverallConfidence());
+        
+        // Extract patient details
+        ParsedReport.PatientDetails patientDetails = extractPatientDetails(rawText, tokens);
+        report.setPatientDetails(patientDetails);
+        
+        // Extract lab results
+        List<ParsedReport.ParsedField> labResults = extractLabResults(rawText, lines);
+        report.setLabResults(labResults);
+        
+        // Extract medications (basic detection)
+        List<ParsedReport.ParsedField> medications = extractMedications(rawText);
+        report.setMedications(medications);
+        
+        Log.d(TAG, String.format("Extracted: patient=%s, labs=%d, meds=%d",
+            patientDetails != null ? patientDetails.getName() : "null",
+            labResults.size(), medications.size()));
+        
+        return report;
+    }
+    
+    /**
+     * Extract patient details (Name, Age, Gender, etc.)
+     */
+    private ParsedReport.PatientDetails extractPatientDetails(String text, List<OcrToken> tokens) {
+        ParsedReport.PatientDetails details = new ParsedReport.PatientDetails();
+        
+        // Extract name
+        Pattern namePattern = Pattern.compile("(?i)(?:patient|name)\\s*:?\\s*([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)");
+        Matcher nameMatcher = namePattern.matcher(text);
+        if (nameMatcher.find()) {
+            details.setName(nameMatcher.group(1).trim());
+        }
+        
+        // Extract age
+        Pattern agePattern = Pattern.compile("(?i)age\\s*:?\\s*(\\d+)\\s*(?:years?|yrs?)?");
+        Matcher ageMatcher = agePattern.matcher(text);
+        if (ageMatcher.find()) {
+            details.setAge(ageMatcher.group(1).trim());
+        }
+        
+        // Extract gender
+        Pattern genderPattern = Pattern.compile("(?i)(?:gender|sex)\\s*:?\\s*(male|female|m|f)");
+        Matcher genderMatcher = genderPattern.matcher(text);
+        if (genderMatcher.find()) {
+            String gender = genderMatcher.group(1).toLowerCase();
+            if (gender.equals("m")) gender = "Male";
+            else if (gender.equals("f")) gender = "Female";
+            else gender = gender.substring(0, 1).toUpperCase() + gender.substring(1);
+            details.setGender(gender);
+        }
+        
+        // Extract patient ID/MRN
+        Pattern idPattern = Pattern.compile("(?i)(?:patient\\s*id|mrn|medical\\s*record)\\s*:?\\s*([A-Z0-9\\-]+)");
+        Matcher idMatcher = idPattern.matcher(text);
+        if (idMatcher.find()) {
+            details.setPatientId(idMatcher.group(1).trim());
+        }
+        
+        return details;
+    }
+    
+    /**
+     * Extract lab test results
+     */
+    private List<ParsedReport.ParsedField> extractLabResults(String text, List<OcrLine> lines) {
+        List<ParsedReport.ParsedField> results = new ArrayList<>();
+        
+        // Common lab test patterns
+        String[][] testPatterns = {
+            {"Hemoglobin|Hgb|HB", "([0-9]+\\.?[0-9]*)", "(g/dl|g/dL|gm/dl)", "12.0-16.0"},
+            {"Glucose|Blood Sugar|FBS|RBS", "([0-9]+\\.?[0-9]*)", "(mg/dl|mg/dL)", "70-140"},
+            {"Cholesterol|Total Cholesterol", "([0-9]+\\.?[0-9]*)", "(mg/dl|mg/dL)", "<200"},
+            {"WBC|White Blood Cell", "([0-9]+\\.?[0-9]*)", "(cells/μl|/μl|x10³/μl)", "4000-11000"},
+            {"RBC|Red Blood Cell", "([0-9]+\\.?[0-9]*)", "(million/μl|x10⁶/μl)", "4.5-5.5"},
+            {"Platelet|PLT", "([0-9]+\\.?[0-9]*)", "(x10³/μl|/μl|lakh/μl)", "150000-450000"}
+        };
+        
+        for (String[] patternData : testPatterns) {
+            String namePattern = patternData[0];
+            String valuePattern = patternData[1];
+            String unitPattern = patternData[2];
+            String refRange = patternData[3];
+            
+            String fullPattern = "(?i)(" + namePattern + ")\\s*:?\\s*" + valuePattern + "\\s*(" + unitPattern + ")?";
+            Pattern pattern = Pattern.compile(fullPattern);
+            Matcher matcher = pattern.matcher(text);
+            
+            while (matcher.find()) {
+                ParsedReport.ParsedField field = new ParsedReport.ParsedField();
+                field.setName(matcher.group(1).trim());
+                field.setValue(matcher.group(2).trim());
+                field.setUnit(matcher.groupCount() > 3 && matcher.group(4) != null ? matcher.group(4).trim() : "");
+                field.setReferenceRange(refRange);
+                field.setConfidence(0.8f); // High confidence for pattern matches
+                
+                // Determine flag
+                field.setFlag(determineFlag(field.getName(), field.getValue(), refRange));
+                
+                results.add(field);
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Extract medications from text
+     */
+    private List<ParsedReport.ParsedField> extractMedications(String text) {
+        List<ParsedReport.ParsedField> medications = new ArrayList<>();
+        
+        // Common medication patterns
+        Pattern medPattern = Pattern.compile("(?i)(?:tablet|cap|capsule|syrup|injection)\\s+([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)", 
+            Pattern.CASE_INSENSITIVE);
+        Matcher matcher = medPattern.matcher(text);
+        
+        while (matcher.find()) {
+            ParsedReport.ParsedField med = new ParsedReport.ParsedField();
+            med.setName(matcher.group(1).trim());
+            med.setFieldType(ParsedReport.ParsedField.FieldType.MEDICATION);
+            med.setConfidence(0.7f);
+            medications.add(med);
+        }
+        
+        return medications;
+    }
+    
+    /**
+     * Determine if value is normal, high, or low
+     */
+    private ParsedReport.ParsedField.Flag determineFlag(String name, String value, String refRange) {
+        try {
+            double numValue = Double.parseDouble(value.replaceAll("[^0-9.]", ""));
+            String nameLower = name.toLowerCase();
+            
+            if (nameLower.contains("hemoglobin") || nameLower.contains("hgb") || nameLower.contains("hb")) {
+                return (numValue < 12.0) ? ParsedReport.ParsedField.Flag.LOW : 
+                       (numValue > 16.0) ? ParsedReport.ParsedField.Flag.HIGH : 
+                       ParsedReport.ParsedField.Flag.NORMAL;
+            } else if (nameLower.contains("glucose") || nameLower.contains("sugar")) {
+                return (numValue < 70) ? ParsedReport.ParsedField.Flag.LOW : 
+                       (numValue > 140) ? ParsedReport.ParsedField.Flag.HIGH : 
+                       ParsedReport.ParsedField.Flag.NORMAL;
+            }
+            
+            return ParsedReport.ParsedField.Flag.NORMAL;
+            
+        } catch (NumberFormatException e) {
+            return ParsedReport.ParsedField.Flag.UNKNOWN;
+        }
+    }
+}

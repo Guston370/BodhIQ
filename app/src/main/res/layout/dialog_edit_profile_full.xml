@@ -258,20 +258,47 @@
 
         </LinearLayout>
 
-        <!-- Emergency Contact Input -->
+        <!-- Emergency Contact Name Input -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_emergency_contact"
+            android:id="@+id/til_emergency_contact_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="Emergency Contact"
+            android:hint="Emergency Contact Name"
+            app:startIconDrawable="@drawable/ic_person_outline"
+            app:boxStrokeColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant"
+            app:startIconTint="?attr/colorOnSurfaceVariant"
+            app:helperText="Optional"
+            app:helperTextTextColor="?attr/colorOnSurfaceVariant">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_emergency_contact_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:maxLines="1"
+                android:textColor="?attr/colorOnSurface" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Emergency Contact Phone Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_emergency_contact_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Emergency Contact Phone"
             app:startIconDrawable="@drawable/ic_phone"
             app:boxStrokeColor="?attr/colorPrimary"
             app:hintTextColor="?attr/colorOnSurfaceVariant"
-            app:startIconTint="?attr/colorOnSurfaceVariant">
+            app:startIconTint="?attr/colorOnSurfaceVariant"
+            app:errorEnabled="true"
+            app:helperText="Used for emergency calls from Home tab"
+            app:helperTextTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_emergency_contact"
+                android:id="@+id/et_emergency_contact_phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="phone"

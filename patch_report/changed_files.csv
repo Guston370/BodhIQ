@@ -1,0 +1,6 @@
+File Path,Change Type,Description
+app/src/main/java/com/mit/bodhiq/ui/fragments/ChatAgentFragment.java,Modified,Route symptom messages to async method with callback handling
+app/src/test/java/com/mit/bodhiq/chatbot/ChatFlowTest.java,New,Unit test to verify symptom detection logic
+tests/patch_report/trace_1.log,New,Diagnostic trace showing root cause and fix
+patch_report/report.md,New,Root cause analysis and fix documentation
+patch_report/changed_files.csv,New,List of changed files

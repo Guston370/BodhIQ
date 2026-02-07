@@ -12,7 +12,9 @@ public class ChatMessage {
         AI_RESPONSE,
         AI_MEDICAL_CARD,
         AI_RECOMMENDATION,
-        SYSTEM_INFO
+        SYSTEM_INFO,
+        AI_TYPING,
+        AI_ERROR
     }
 
     public enum Severity {
@@ -28,7 +30,7 @@ public class ChatMessage {
     private String content;
     private long timestamp;
     private boolean isFromUser;
-    
+
     // Medical-specific fields
     private List<MedicalParameter> medicalParameters;
     private List<String> recommendations;
@@ -50,39 +52,99 @@ public class ChatMessage {
     }
 
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public MessageType getType() { return type; }
-    public void setType(MessageType type) { this.type = type; }
+    public String getUserId() {
+        return userId;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
-    public long getTimestamp() { return timestamp; }
-    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public MessageType getType() {
+        return type;
+    }
 
-    public boolean isFromUser() { return isFromUser; }
-    public void setFromUser(boolean fromUser) { isFromUser = fromUser; }
+    public void setType(MessageType type) {
+        this.type = type;
+    }
 
-    public List<MedicalParameter> getMedicalParameters() { return medicalParameters; }
-    public void setMedicalParameters(List<MedicalParameter> medicalParameters) { this.medicalParameters = medicalParameters; }
+    public String getContent() {
+        return content;
+    }
 
-    public List<String> getRecommendations() { return recommendations; }
-    public void setRecommendations(List<String> recommendations) { this.recommendations = recommendations; }
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    public Severity getSeverity() { return severity; }
-    public void setSeverity(Severity severity) { this.severity = severity; }
+    public long getTimestamp() {
+        return timestamp;
+    }
 
-    public String getReportId() { return reportId; }
-    public void setReportId(String reportId) { this.reportId = reportId; }
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 
-    public boolean isRequiresFollowUp() { return requiresFollowUp; }
-    public void setRequiresFollowUp(boolean requiresFollowUp) { this.requiresFollowUp = requiresFollowUp; }
+    public boolean isFromUser() {
+        return isFromUser;
+    }
 
-    public String getMedicalDisclaimer() { return medicalDisclaimer; }
-    public void setMedicalDisclaimer(String medicalDisclaimer) { this.medicalDisclaimer = medicalDisclaimer; }
+    public void setFromUser(boolean fromUser) {
+        isFromUser = fromUser;
+    }
+
+    public List<MedicalParameter> getMedicalParameters() {
+        return medicalParameters;
+    }
+
+    public void setMedicalParameters(List<MedicalParameter> medicalParameters) {
+        this.medicalParameters = medicalParameters;
+    }
+
+    public List<String> getRecommendations() {
+        return recommendations;
+    }
+
+    public void setRecommendations(List<String> recommendations) {
+        this.recommendations = recommendations;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(Severity severity) {
+        this.severity = severity;
+    }
+
+    public String getReportId() {
+        return reportId;
+    }
+
+    public void setReportId(String reportId) {
+        this.reportId = reportId;
+    }
+
+    public boolean isRequiresFollowUp() {
+        return requiresFollowUp;
+    }
+
+    public void setRequiresFollowUp(boolean requiresFollowUp) {
+        this.requiresFollowUp = requiresFollowUp;
+    }
+
+    public String getMedicalDisclaimer() {
+        return medicalDisclaimer;
+    }
+
+    public void setMedicalDisclaimer(String medicalDisclaimer) {
+        this.medicalDisclaimer = medicalDisclaimer;
+    }
 }

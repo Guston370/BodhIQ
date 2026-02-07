@@ -1,0 +1,303 @@
+package com.mit.bodhiq.utils;
+
+import android.graphics.Bitmap;
+import android.util.Log;
+
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
+/**
+ * Image preprocessing utility using OpenCV for enhanced OCR accuracy
+ * Provides grayscale conversion, denoising, binarization, deskewing, and contrast normalization
+ */
+public class ImagePreprocessor {
+    
+    private static final String TAG = "ImagePreprocessor";
+    
+    static {
+        try {
+            System.loadLibrary("opencv_java4");
+            Log.d(TAG, "OpenCV library loaded successfully");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "OpenCV library load failed", e);
+        }
+    }
+    
+    /**
+     * Preprocessing configuration
+     */
+    public static class PreprocessConfig {
+        public boolean enableGrayscale = true;
+        public boolean enableDenoise = true;
+        public boolean enableBinarization = true;
+        public boolean enableMorphology = true;
+        public boolean enableDeskew = true;
+        public boolean enableContrastNormalization = true;
+        
+        public int denoiseKernelSize = 3;
+        public int morphologyKernelSize = 2;
+        
+        public static PreprocessConfig getDefault() {
+            return new PreprocessConfig();
+        }
+        
+        public static PreprocessConfig getMinimal() {
+            PreprocessConfig config = new PreprocessConfig();
+            config.enableDenoise = false;
+            config.enableMorphology = false;
+            config.enableDeskew = false;
+            return config;
+        }
+    }
+    
+    /**
+     * Main preprocessing pipeline
+     * Applies all enabled preprocessing steps in sequence
+     */
+    public Bitmap preprocess(Bitmap input, PreprocessConfig config) {
+        if (input == null) {
+            Log.e(TAG, "Input bitmap is null");
+            return null;
+        }
+        
+        try {
+            Mat mat = new Mat();
+            Utils.bitmapToMat(input, mat);
+            
+            // Step 1: Grayscale conversion
+            if (config.enableGrayscale) {
+                mat = grayscale(mat);
+                Log.d(TAG, "Applied grayscale conversion");
+            }
+            
+            // Step 2: Denoise
+            if (config.enableDenoise) {
+                mat = denoise(mat, config.denoiseKernelSize);
+                Log.d(TAG, "Applied denoising with kernel size: " + config.denoiseKernelSize);
+            }
+            
+            // Step 3: Contrast normalization
+            if (config.enableContrastNormalization) {
+                mat = normalizeContrast(mat);
+                Log.d(TAG, "Applied contrast normalization");
+            }
+            
+            // Step 4: Binarization
+            if (config.enableBinarization) {
+                mat = adaptiveThreshold(mat);
+                Log.d(TAG, "Applied adaptive thresholding");
+            }
+            
+            // Step 5: Morphological operations
+            if (config.enableMorphology) {
+                mat = morphologicalOperations(mat, config.morphologyKernelSize);
+                Log.d(TAG, "Applied morphological operations");
+            }
+            
+            // Step 6: Deskew
+            if (config.enableDeskew) {
+                mat = deskew(mat);
+                Log.d(TAG, "Applied deskewing");
+            }
+            
+            // Convert back to bitmap
+            Bitmap output = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat, output);
+            
+            mat.release();
+            
+            Log.d(TAG, "Preprocessing completed successfully");
+            return output;
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Preprocessing failed", e);
+            return input; // Return original on failure
+        }
+    }
+    
+    /**
+     * Convert to grayscale
+     */
+    private Mat grayscale(Mat input) {
+        Mat gray = new Mat();
+        if (input.channels() == 1) {
+            return input; // Already grayscale
+        }
+        Imgproc.cvtColor(input, gray, Imgproc.COLOR_BGR2GRAY);
+        return gray;
+    }
+    
+    /**
+     * Denoise using Gaussian blur
+     */
+    private Mat denoise(Mat input, int kernelSize) {
+        Mat denoised = new Mat();
+        // Gaussian blur for noise reduction
+        Imgproc.GaussianBlur(input, denoised, new Size(kernelSize, kernelSize), 0);
+        return denoised;
+    }
+    
+    /**
+     * Adaptive thresholding for binarization
+     * Better for documents with varying lighting
+     */
+    private Mat adaptiveThreshold(Mat input) {
+        Mat binary = new Mat();
+        
+        // Ensure input is grayscale
+        Mat gray = input;
+        if (input.channels() > 1) {
+            gray = grayscale(input);
+        }
+        
+        // Adaptive threshold - better for medical reports with varying contrast
+        Imgproc.adaptiveThreshold(
+            gray,
+            binary,
+            255,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+            Imgproc.THRESH_BINARY,
+            11,  // Block size
+            2    // Constant subtracted from mean
+        );
+        
+        return binary;
+    }
+    
+    /**
+     * Morphological operations to clean up noise and connect broken characters
+     */
+    private Mat morphologicalOperations(Mat input, int kernelSize) {
+        Mat result = new Mat();
+        
+        // Create morphological kernel
+        Mat kernel = Imgproc.getStructuringElement(
+            Imgproc.MORPH_RECT,
+            new Size(kernelSize, kernelSize)
+        );
+        
+        // Morphological opening (erosion followed by dilation)
+        // Removes small noise
+        Imgproc.morphologyEx(input, result, Imgproc.MORPH_OPEN, kernel);
+        
+        // Morphological closing (dilation followed by erosion)
+        // Connects broken text
+        Mat closed = new Mat();
+        Imgproc.morphologyEx(result, closed, Imgproc.MORPH_CLOSE, kernel);
+        
+        kernel.release();
+        result.release();
+        
+        return closed;
+    }
+    
+    /**
+     * Deskew the image by detecting and correcting skew angle
+     */
+    private Mat deskew(Mat input) {
+        try {
+            // Simple deskew using moments
+            // For complex medical reports, this provides basic skew correction
+            
+            // Ensure binary image
+            Mat binary = input;
+            if (input.channels() > 1) {
+                binary = grayscale(input);
+                binary = adaptiveThreshold(binary);
+            }
+            
+            // Calculate image moments
+            org.opencv.core.Moments moments = Imgproc.moments(binary);
+            
+            // Calculate skew angle
+            double angle = 0;
+            if (moments.mu02 != 0) {
+                angle = 0.5 * Math.atan2(2 * moments.mu11, moments.mu20 - moments.mu02);
+                angle = Math.toDegrees(angle);
+                
+                // Only correct if skew is significant (> 0.5 degrees)
+                if (Math.abs(angle) < 0.5) {
+                    Log.d(TAG, "Skew angle too small, skipping deskew: " + angle);
+                    return input;
+                }
+                
+                Log.d(TAG, "Detected skew angle: " + angle + " degrees");
+            }
+            
+            // Rotate image to correct skew
+            if (Math.abs(angle) > 0.5) {
+                Point center = new Point(input.cols() / 2.0, input.rows() / 2.0);
+                Mat rotationMatrix = Imgproc.getRotationMatrix2D(center, angle, 1.0);
+                
+                Mat deskewed = new Mat();
+                Imgproc.warpAffine(
+                    input,
+                    deskewed,
+                    rotationMatrix,
+                    input.size(),
+                    Imgproc.INTER_CUBIC,
+                    Core.BORDER_REPLICATE
+                );
+                
+                rotationMatrix.release();
+                return deskewed;
+            }
+            
+            return input;
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Deskewing failed", e);
+            return input;
+        }
+    }
+    
+    /**
+     * Normalize contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization)
+     */
+    private Mat normalizeContrast(Mat input) {
+        try {
+            Mat result = new Mat();
+            
+            // Ensure grayscale
+            Mat gray = input;
+            if (input.channels() > 1) {
+                gray = grayscale(input);
+            }
+            
+            // Apply CLAHE for contrast enhancement
+            org.opencv.photo.Photo.createCLAHE(2.0, new Size(8, 8)).apply(gray, result);
+            
+            return result;
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Contrast normalization failed", e);
+            return input;
+        } catch (NoClassDefFoundError e) {
+            // Fallback if photo module not available
+            Log.w(TAG, "CLAHE not available, using histogram equalization", e);
+            Mat result = new Mat();
+            Imgproc.equalizeHist(input, result);
+            return result;
+        }
+    }
+    
+    /**
+     * Quick preprocessing for fast OCR (minimal operations)
+     */
+    public Bitmap preprocessFast(Bitmap input) {
+        return preprocess(input, PreprocessConfig.getMinimal());
+    }
+    
+    /**
+     * Full preprocessing for maximum accuracy
+     */
+    public Bitmap preprocessFull(Bitmap input) {
+        return preprocess(input, PreprocessConfig.getDefault());
+    }
+}

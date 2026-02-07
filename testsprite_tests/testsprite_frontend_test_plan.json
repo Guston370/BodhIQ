@@ -1,0 +1,615 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Registration with Valid Details",
+    "description": "Verify that a new user can successfully register using valid email and password and then navigates to the main screen.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to registration screen"
+      },
+      {
+        "type": "action",
+        "description": "Input valid email and password"
+      },
+      {
+        "type": "action",
+        "description": "Submit registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "User is registered successfully and redirected to the main screen"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Login with Correct Email and Password",
+    "description": "Verify successful login with correct email and password and session persistence on app restart.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login screen"
+      },
+      {
+        "type": "action",
+        "description": "Input valid registered email and correct password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "User is logged in successfully and redirected to main screen"
+      },
+      {
+        "type": "action",
+        "description": "Restart application"
+      },
+      {
+        "type": "assertion",
+        "description": "User session is persisted and main screen is shown directly"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Login Failure with Incorrect Credentials",
+    "description": "Verify login error message when incorrect email or password is entered.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login screen"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid email or wrong password"
+      },
+      {
+        "type": "action",
+        "description": "Click login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Login fails with appropriate error message"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Google Sign-In Authentication Successfully",
+    "description": "Verify that a user can sign in using Google account and session persists across app restarts.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login screen"
+      },
+      {
+        "type": "action",
+        "description": "Select Google Sign-In button"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid Google account for authentication"
+      },
+      {
+        "type": "assertion",
+        "description": "User is authenticated via Google and redirected to main screen"
+      },
+      {
+        "type": "action",
+        "description": "Restart the app"
+      },
+      {
+        "type": "assertion",
+        "description": "User session is persisted, auto login succeeds"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Forgot Password Email Reset Flow",
+    "description": "Verify that user can request password reset via email link and receive confirmation notification.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Forgot Password screen"
+      },
+      {
+        "type": "action",
+        "description": "Input registered email address"
+      },
+      {
+        "type": "action",
+        "description": "Submit reset password request"
+      },
+      {
+        "type": "assertion",
+        "description": "App confirms that password reset email has been sent"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "OCR Medical Report Scanning with Valid Input",
+    "description": "Verify that the camera capture successfully extracts text via OCR within 5 seconds and AI analysis is performed and report saved.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open medical report scanning screen"
+      },
+      {
+        "type": "action",
+        "description": "Capture medical report image with camera"
+      },
+      {
+        "type": "assertion",
+        "description": "OCR text extraction completes within 5 seconds"
+      },
+      {
+        "type": "assertion",
+        "description": "AI-driven medical analysis of extracted text completes successfully"
+      },
+      {
+        "type": "action",
+        "description": "Save scanned report"
+      },
+      {
+        "type": "assertion",
+        "description": "Medical report is saved and visible in report list"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "OCR Handling of Poor Image Quality",
+    "description": "Verify the behavior when low quality or blurred images are scanned for OCR extraction.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open medical report scanning screen"
+      },
+      {
+        "type": "action",
+        "description": "Capture blurry or low-light medical report image"
+      },
+      {
+        "type": "assertion",
+        "description": "App displays an error or suggests retaking the image"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Schedule Medicine Reminder and Receive Notification",
+    "description": "Verify successful scheduling of medicine reminder and receiving notification at scheduled time with proper interactive actions.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open medicine reminders screen"
+      },
+      {
+        "type": "action",
+        "description": "Schedule a medicine reminder at specific future time"
+      },
+      {
+        "type": "assertion",
+        "description": "Reminder is stored and displayed in list"
+      },
+      {
+        "type": "action",
+        "description": "Wait until scheduled reminder time"
+      },
+      {
+        "type": "assertion",
+        "description": "Notification appears with Take, Snooze, and Dismiss buttons"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Reminder Interaction: Take Action",
+    "description": "Verify that selecting the Take action on medicine reminder notification marks the reminder as completed.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Receive medicine reminder notification"
+      },
+      {
+        "type": "action",
+        "description": "Select Take action on notification"
+      },
+      {
+        "type": "assertion",
+        "description": "Reminder is marked as taken and notification is dismissed"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Reminder Interaction: Snooze Action",
+    "description": "Verify that selecting Snooze postpones the notification by the predefined snooze interval.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Receive medicine reminder notification"
+      },
+      {
+        "type": "action",
+        "description": "Select Snooze action on notification"
+      },
+      {
+        "type": "assertion",
+        "description": "Notification is dismissed and reappears after snooze period"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Reminder Interaction: Dismiss Action",
+    "description": "Verify that selecting Dismiss cancels the reminder notification without marking taken.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Receive medicine reminder notification"
+      },
+      {
+        "type": "action",
+        "description": "Select Dismiss action on notification"
+      },
+      {
+        "type": "assertion",
+        "description": "Notification is dismissed without changing reminder status"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Medicine Reminder Persistence After Device Reboot",
+    "description": "Verify that scheduled medicine reminders persist and notifications fire correctly after device reboot.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Schedule a medicine reminder"
+      },
+      {
+        "type": "action",
+        "description": "Simulate device reboot"
+      },
+      {
+        "type": "assertion",
+        "description": "Medicine reminder is still scheduled post reboot"
+      },
+      {
+        "type": "action",
+        "description": "Wait for scheduled reminder notification"
+      },
+      {
+        "type": "assertion",
+        "description": "Notification is triggered at proper time after reboot"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Generate Emergency QR Code with Valid Medical Data",
+    "description": "Verify that the app generates a QR code conforming to medical-agent.v1 schema including selected medical info and that it can be scanned by third-party reader.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Emergency QR code generator screen"
+      },
+      {
+        "type": "action",
+        "description": "Select relevant medical information fields"
+      },
+      {
+        "type": "action",
+        "description": "Generate QR code"
+      },
+      {
+        "type": "assertion",
+        "description": "QR code is generated and visible on screen"
+      },
+      {
+        "type": "action",
+        "description": "Scan generated QR code using generic QR scanning app"
+      },
+      {
+        "type": "assertion",
+        "description": "Scanned content conforms to medical-agent.v1 schema and is human-readable"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Emergency QR Code Sharing Functionality",
+    "description": "Verify that the generated emergency QR code can be shared via supported sharing intents.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Generate an emergency QR code"
+      },
+      {
+        "type": "action",
+        "description": "Select share option"
+      },
+      {
+        "type": "assertion",
+        "description": "Sharing interface opens and user can share QR code image to other apps"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "AI Medical Chatbot Basic Conversation",
+    "description": "Verify that the AI chatbot responds accurately and empathically to simple medical queries with maintained context.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open AI medical chatbot interface"
+      },
+      {
+        "type": "action",
+        "description": "Send a simple medical question such as symptoms inquiry"
+      },
+      {
+        "type": "assertion",
+        "description": "Chatbot responds accurately with empathic tone"
+      },
+      {
+        "type": "action",
+        "description": "Send follow-up question related to initial query"
+      },
+      {
+        "type": "assertion",
+        "description": "Chatbot maintains conversation context and responds appropriately"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "AI Chatbot Medical Document Upload and Analysis",
+    "description": "Verify that uploading a medical document triggers AI analysis and the chatbot provides a meaningful summary.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open AI chatbot and upload medical document"
+      },
+      {
+        "type": "assertion",
+        "description": "Document is accepted and OCR analysis is started"
+      },
+      {
+        "type": "assertion",
+        "description": "Chatbot provides accurate summary of medical document content"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "AI Chatbot Emergency Detection during Conversation",
+    "description": "Verify that chatbot detects emergency keywords or phrases and triggers emergency alert behavior.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send message containing emergency keywords (e.g., chest pain, severe bleeding)"
+      },
+      {
+        "type": "assertion",
+        "description": "Chatbot detects emergency and provides appropriate urgent advice or alert"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Pharmaceutical Intelligence Multi-Agent Query Handling",
+    "description": "Verify the multi-agent system delegates pharmaceutical research queries to relevant agents and compiles comprehensive reports.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Request pharmaceutical data such as clinical trials or patent insights"
+      },
+      {
+        "type": "assertion",
+        "description": "Master agent delegates requests to specialized agents"
+      },
+      {
+        "type": "assertion",
+        "description": "Comprehensive report is generated accurately including data from all relevant agents"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Health Tracking Data Storage and Retrieval",
+    "description": "Verify that user health history items and wellness goals are correctly stored in the database and can be retrieved and displayed.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Add new health history item and wellness goal"
+      },
+      {
+        "type": "assertion",
+        "description": "Health tracking data is saved successfully in local Room database"
+      },
+      {
+        "type": "action",
+        "description": "Reload health tracking screen"
+      },
+      {
+        "type": "assertion",
+        "description": "Previously saved data is correctly retrieved and displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Accurate BMI Calculation in Health Tracker",
+    "description": "Verify that BMI is calculated accurately from user inputted height and weight and matches expected values.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input various combinations of height and weight values"
+      },
+      {
+        "type": "assertion",
+        "description": "BMI is calculated using the correct formula and displayed correctly"
+      },
+      {
+        "type": "assertion",
+        "description": "Edge cases such as zero or extremely low/high values handled gracefully"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Logout Clears Session and Local Preferences",
+    "description": "Verify that logging out clears authentication session, local DataStore preferences and redirects user to login screen.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to the app"
+      },
+      {
+        "type": "action",
+        "description": "Select logout option"
+      },
+      {
+        "type": "assertion",
+        "description": "User authentication session and local data stored in preferences are cleared"
+      },
+      {
+        "type": "assertion",
+        "description": "App redirects to login screen"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Encrypted Storage and Secure Network Communication",
+    "description": "Verify that sensitive user data stored locally is encrypted and all network calls are performed over secure HTTPS connections as per HIPAA compliance.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Store sensitive user health information locally"
+      },
+      {
+        "type": "assertion",
+        "description": "Local data is encrypted on disk"
+      },
+      {
+        "type": "action",
+        "description": "Initiate network request to Firebase backend"
+      },
+      {
+        "type": "assertion",
+        "description": "Network traffic is over secure HTTPS protocol"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "App Launch Performance Under 3 Seconds",
+    "description": "Verify that the app launches from cold start to splash screen and then main screen within 3 seconds on supported devices.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Cold start the app on test device"
+      },
+      {
+        "type": "assertion",
+        "description": "Total time from app launch to main screen display is less than 3 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "AI Chatbot Response Time Within 10 Seconds",
+    "description": "Verify that AI chatbot responds to user messages within 10 seconds under normal network conditions.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send a medical query to the chatbot"
+      },
+      {
+        "type": "assertion",
+        "description": "Chatbot replies are received within 10 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Invalid Email Format During Registration",
+    "description": "Verify that entering an invalid email format on registration screen displays appropriate validation message and prevents submission.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to registration screen"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid email format and valid password"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to submit registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Form validation prevents submission and displays email format error"
+      }
+    ]
+  }
+]

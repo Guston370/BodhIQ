@@ -22,7 +22,8 @@ import java.util.Map;
  */
 public class QrUtil {
     
-    private static final int DEFAULT_SIZE = 1000;
+    
+    private static final int DEFAULT_SIZE = 800;
     private static final int MARGIN = 1;
     private static final float LOGO_SIZE_RATIO = 0.15f; // 15% of QR width
     
@@ -124,13 +125,15 @@ public class QrUtil {
     
     /**
      * Get recommended QR size based on payload
+     * Plaintext payloads are typically smaller than JSON format
      */
     public static int getRecommendedSize(String payload) {
         int payloadSize = payload.getBytes().length;
         
-        if (payloadSize < 500) {
+        // Most plaintext payloads will be under 300 bytes
+        if (payloadSize < 300) {
             return 800;
-        } else if (payloadSize < 1500) {
+        } else if (payloadSize < 600) {
             return 1000;
         } else {
             return 1200;

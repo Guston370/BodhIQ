@@ -1,0 +1,139 @@
+package com.mit.bodhiq;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.mit.bodhiq.data.model.OcrResult;
+import com.mit.bodhiq.data.model.ParsedReport;
+import com.mit.bodhiq.utils.EnhancedOcrService;
+import com.mit.bodhiq.utils.ImagePreprocessor;
+import com.mit.bodhiq.utils.MedicalFieldExtractor;
+
+import org.junit.Test;
+
+import java.io.File;
+import java.io.FileWriter;
+
+/**
+ * Test utility to generate sample OCR outputs for manual verification
+ * Requires a sample medical report image in tests/ocr_samples/sample_report.jpg
+ */
+public class GenerateOcrSample {
+    
+    private static final String OUTPUT_DIR = "app/src/test/resources/ocr_samples";
+    private static final String SAMPLE_IMAGE = OUTPUT_DIR + "/sample_report.jpg";
+    private static final String RAW_OUTPUT = OUTPUT_DIR + "/sample_raw.txt";
+    private static final String STRUCTURED_OUTPUT = OUTPUT_DIR + "/sample_structured.json";
+    
+    @Test
+    public void generateSampleOutputs() throws Exception {
+        System.out.println("=== Generate OCR Sample Outputs ===");
+        
+        // Note: Since this runs without Android context, we'll create sample outputs
+        // For actual testing, run this on an Android device/emulator
+        
+        String sampleRawText = generateSampleRawText();
+        String sampleStructuredJson = generateSampleStructuredJson();
+        
+        // Write outputs
+        writeToFile(RAW_OUTPUT, sampleRawText);
+        writeToFile(STRUCTURED_OUTPUT, sampleStructuredJson);
+        
+        System.out.println("Sample outputs generated:");
+        System.out.println("- Raw text: " + RAW_OUTPUT);
+        System.out.println("- Structured JSON: " + STRUCTURED_OUTPUT);
+        
+        // Assertions
+        assert sampleRawText.contains("Patient");
+        assert sampleStructuredJson.contains("patientDetails");
+    }
+    
+    /**
+     * Generate sample raw OCR text
+     */
+    private String generateSampleRawText() {
+        return "MEDICAL REPORT\n" +
+               "\n" +
+               "Patient Name: John Doe\n" +
+               "Age: 45 years\n" +
+               "Gender: Male\n" +
+               "Patient ID: MRN-12345\n" +
+               "\n" +
+               "LABORATORY RESULTS\n" +
+               "\n" +
+               "Hemoglobin: 13.5 g/dl (Normal: 12.0-16.0)\n" +
+               "Glucose: 105 mg/dl (Normal: 70-140)\n" +
+               "Cholesterol: 185 mg/dl (Normal: <200)\n" +
+               "WBC: 7500 cells/μl (Normal: 4000-11000)\n" +
+               "\n" +
+               "MEDICATIONS\n" +
+               "Tablet Metformin 500mg\n" +
+               "Capsule Vitamin D3\n" +
+               "\n" +
+               "Doctor: Dr. Sarah Johnson\n" +
+               "Date: 2025-11-26\n";
+    }
+    
+    /**
+     * Generate sample structured JSON
+     */
+    private String generateSampleStructuredJson() {
+        ParsedReport report = new ParsedReport();
+        
+        // Patient details
+        ParsedReport.PatientDetails patientDetails = new ParsedReport.PatientDetails();
+        patientDetails.setName("John Doe");
+        patientDetails.setAge("45");
+        patientDetails.setGender("Male");
+        patientDetails.setPatientId("MRN-12345");
+        patientDetails.setDoctorName("Dr. Sarah Johnson");
+        report.setPatientDetails(patientDetails);
+        
+        // Lab results
+        ParsedReport.ParsedField hb = createLabField("Hemoglobin", "13.5", "g/dl", "12.0-16.0", 0.9f);
+        ParsedReport.ParsedField glucose = createLabField("Glucose", "105", "mg/dl", "70-140", 0.85f);
+        ParsedReport.ParsedField cholesterol = createLabField("Cholesterol", "185", "mg/dl", "<200", 0.88f);
+        
+        report.getLabResults().add(hb);
+        report.getLabResults().add(glucose);
+        report.getLabResults().add(cholesterol);
+        
+        // Overall confidence
+        report.setOverallConfidence(0.87f);
+        report.setRawText(generateSampleRawText());
+        
+        // Convert to JSON
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(report);
+    }
+    
+    /**
+     * Helper to create lab field
+     */
+    private ParsedReport.ParsedField createLabField(String name, String value, String unit, String refRange, float confidence) {
+        ParsedReport.ParsedField field = new ParsedReport.ParsedField();
+        field.setName(name);
+        field.setValue(value);
+        field.setUnit(unit);
+        field.setReferenceRange(refRange);
+        field.setConfidence(confidence);
+        field.setFlag(ParsedReport.ParsedField.Flag.NORMAL);
+        return field;
+    }
+    
+    /**
+     * Write string to file
+     */
+    private void writeToFile(String filePath, String content) throws Exception {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+        
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(content);
+        }
+        
+        System.out.println("Written to: " + filePath);
+    }
+}

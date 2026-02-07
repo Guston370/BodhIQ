@@ -45,16 +45,16 @@ public class ChatAgentFragment extends Fragment {
     private ChatMessageAdapter chatAdapter;
     private List<ChatMessage> chatMessages;
     private CompositeDisposable disposables;
-    
+
     @Inject
     MedicalReportAgent medicalReportAgent;
-    
+
     @Inject
     GeminiApiService geminiApiService;
-    
+
     @Inject
     ProfileRepository profileRepository;
-    
+
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore firestore;
     private UserProfile currentUserProfile;
@@ -63,7 +63,7 @@ public class ChatAgentFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
         binding = FragmentChatAgentBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -71,7 +71,7 @@ public class ChatAgentFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        
+
         // Initialize components
         initializeComponents();
         setupChatInterface();
@@ -83,13 +83,13 @@ public class ChatAgentFragment extends Fragment {
         disposables = new CompositeDisposable();
         firebaseAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
-        
+
         // Initialize ChatController
         chatController = new ChatController(requireContext());
-        
+
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatMessageAdapter(chatMessages);
-        
+
         binding.rvChatMessages.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rvChatMessages.setAdapter(chatAdapter);
     }
@@ -97,7 +97,7 @@ public class ChatAgentFragment extends Fragment {
     private void setupChatInterface() {
         // Setup send button
         binding.fabSend.setOnClickListener(v -> sendMessage());
-        
+
         // Setup enter key to send message
         binding.etMessage.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) {
@@ -106,27 +106,25 @@ public class ChatAgentFragment extends Fragment {
             }
             return false;
         });
-        
+
         // Show empty state initially
         showEmptyState(chatMessages.isEmpty());
     }
 
     private void loadUserProfile() {
         disposables.add(
-            profileRepository.getUserProfile()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    profile -> {
-                        currentUserProfile = profile;
-                        chatController.setUserProfile(profile);
-                    },
-                    error -> {
-                        // Handle error silently, continue without profile
-                    }
-                )
-        );
+                profileRepository.getUserProfile()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                profile -> {
+                                    currentUserProfile = profile;
+                                    chatController.setUserProfile(profile);
+                                },
+                                error -> {
+                                    // Handle error silently, continue without profile
+                                }));
     }
-    
+
     /**
      * Set report text from scanned/uploaded report
      */
@@ -142,75 +140,110 @@ public class ChatAgentFragment extends Fragment {
         welcomeMessage.setType(ChatMessage.MessageType.AI_RESPONSE);
         welcomeMessage.setFromUser(false);
         welcomeMessage.setContent(
-            "🤖 **Welcome to BodhIQ Medical Assistant!**\n\n" +
-            "I'm powered by Google's Gemini AI and can help you with:\n\n" +
-            "• 🔬 **Medical report analysis** - Upload or describe your lab results\n" +
-            "• 🩺 **Symptom assessment** - Tell me about any symptoms you're experiencing\n" +
-            "• 💊 **Health guidance** - Get personalized health recommendations\n" +
-            "• 📋 **Test interpretation** - Understand what your medical tests mean\n" +
-            "• 🏥 **When to seek care** - Guidance on when to see a healthcare provider\n\n" +
-            "**How to get started:**\n" +
-            "• Type your symptoms or health questions\n" +
-            "• Share details from your medical reports\n" +
-            "• Ask about medications, treatments, or health conditions\n" +
-            "• Request explanations of medical terms\n\n" +
-            "**Example questions:**\n" +
-            "• \"I have a headache and feel dizzy\"\n" +
-            "• \"What does high cholesterol mean?\"\n" +
-            "• \"My blood pressure is 140/90, is that normal?\"\n\n" +
-            "⚠️ **Important:** I provide educational information only. Always consult your healthcare provider for medical decisions and treatment."
-        );
-        
+                "🤖 Welcome to BodhIQ Medical Assistant!\n\n" +
+                        "I'm powered by Google's Gemini AI and can help you with:\n\n" +
+                        "• 🔬 Medical report analysis - Upload or describe your lab results\n" +
+                        "• 🩺 Symptom assessment - Tell me about any symptoms you're experiencing\n" +
+                        "• 💊 Health guidance - Get personalized health recommendations\n" +
+                        "• 📋 Test interpretation - Understand what your medical tests mean\n" +
+                        "• 🏥 When to seek care - Guidance on when to see a healthcare provider\n\n" +
+                        "How to get started:\n" +
+                        "• Type your symptoms or health questions\n" +
+                        "• Share details from your medical reports\n" +
+                        "• Ask about medications, treatments, or health conditions\n" +
+                        "• Request explanations of medical terms\n\n" +
+                        "Example questions:\n" +
+                        "• \"I have a headache and feel dizzy\"\n" +
+                        "• \"What does high cholesterol mean?\"\n" +
+                        "• \"My blood pressure is 140/90, is that normal?\"\n\n" +
+                        "⚠️ Important: I provide educational information only. Always consult your healthcare provider for medical decisions and treatment.");
+
         addMessageToChat(welcomeMessage);
     }
-    
+
     private void sendMessage() {
         String message = binding.etMessage.getText().toString().trim();
         if (message.isEmpty()) {
             return;
         }
-        
+
         // Clear input
         binding.etMessage.setText("");
-        
+
         // Add user message to chat
         ChatMessage userMessage = new ChatMessage();
         userMessage.setType(ChatMessage.MessageType.USER_TEXT);
         userMessage.setFromUser(true);
         userMessage.setContent(message);
-        
+
         addMessageToChat(userMessage);
-        
+
         // Show typing indicator
         showTypingIndicator();
-        
+
         // Process the message
         processUserMessage(message);
     }
 
     private void processUserMessage(String message) {
-        // Process message in background using ChatController
-        new Thread(() -> {
-            try {
-                ChatMessage response = chatController.processMessage(message);
+        // Detect intent to route to appropriate handler
+        String lowerMessage = message.toLowerCase();
+        
+        // Check if it's a symptom-related message
+        if (containsSymptoms(message) || lowerMessage.contains("sick") || 
+            lowerMessage.contains("feel") || lowerMessage.contains("hurt")) {
+            // Use async symptom check
+            chatController.processSymptomCheckAsync(message, new ChatController.SymptomCheckCallback() {
+                @Override
+                public void onSuccess(ChatMessage response) {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            hideTypingIndicator();
+                            addMessageToChat(response);
+                            
+                            // Add emergency guidance if critical
+                            if (response.getSeverity() == ChatMessage.Severity.CRITICAL || 
+                                response.getSeverity() == ChatMessage.Severity.HIGH) {
+                                addEmergencyGuidance();
+                            }
+                        });
+                    }
+                }
                 
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        hideTypingIndicator();
-                        addMessageToChat(response);
-                    });
+                @Override
+                public void onError(ChatMessage errorMessage) {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            hideTypingIndicator();
+                            addMessageToChat(errorMessage);
+                        });
+                    }
                 }
-            } catch (Exception e) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        hideTypingIndicator();
-                        showErrorMessage("I encountered an error processing your message. Please try again.");
-                    });
+            });
+        } else {
+            // Use synchronous processing for non-symptom messages
+            new Thread(() -> {
+                try {
+                    ChatMessage response = chatController.processMessage(message);
+
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            hideTypingIndicator();
+                            addMessageToChat(response);
+                        });
+                    }
+                } catch (Exception e) {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            hideTypingIndicator();
+                            showErrorMessage("I encountered an error processing your message. Please try again.");
+                        });
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
-    
+
     /**
      * Handle action button clicks (Create Reminder, Open QR, etc.)
      */
@@ -233,10 +266,10 @@ public class ChatAgentFragment extends Fragment {
                 break;
         }
     }
-    
+
     private String buildUserContext() {
         StringBuilder context = new StringBuilder();
-        
+
         if (currentUserProfile != null) {
             if (currentUserProfile.getAge() != null && !currentUserProfile.getAge().isEmpty()) {
                 context.append("Age: ").append(currentUserProfile.getAge()).append(" years. ");
@@ -248,18 +281,18 @@ public class ChatAgentFragment extends Fragment {
                 context.append("Name: ").append(currentUserProfile.getFullName()).append(". ");
             }
         }
-        
+
         return context.toString();
     }
 
     private boolean containsMedicalParameters(String message) {
         String lowerMessage = message.toLowerCase();
         String[] medicalKeywords = {
-            "hemoglobin", "glucose", "cholesterol", "blood pressure", "heart rate",
-            "white blood cell", "red blood cell", "platelets", "creatinine", "bun",
-            "alt", "ast", "bilirubin", "tsh", "t3", "t4", "triglycerides", "hdl", "ldl"
+                "hemoglobin", "glucose", "cholesterol", "blood pressure", "heart rate",
+                "white blood cell", "red blood cell", "platelets", "creatinine", "bun",
+                "alt", "ast", "bilirubin", "tsh", "t3", "t4", "triglycerides", "hdl", "ldl"
         };
-        
+
         for (String keyword : medicalKeywords) {
             if (lowerMessage.contains(keyword)) {
                 return true;
@@ -271,11 +304,11 @@ public class ChatAgentFragment extends Fragment {
     private boolean containsSymptoms(String message) {
         String lowerMessage = message.toLowerCase();
         String[] symptomKeywords = {
-            "pain", "ache", "fever", "headache", "nausea", "vomiting", "dizziness",
-            "fatigue", "tired", "shortness of breath", "cough", "sore throat",
-            "rash", "swelling", "chest pain", "abdominal pain", "back pain"
+                "pain", "ache", "fever", "headache", "nausea", "vomiting", "dizziness",
+                "fatigue", "tired", "shortness of breath", "cough", "sore throat",
+                "rash", "swelling", "chest pain", "abdominal pain", "back pain"
         };
-        
+
         for (String keyword : symptomKeywords) {
             if (lowerMessage.contains(keyword)) {
                 return true;
@@ -293,7 +326,7 @@ public class ChatAgentFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         hideTypingIndicator();
                         addMessageToChat(response);
-                        
+
                         // Add follow-up suggestions if needed
                         if (response.isRequiresFollowUp()) {
                             addFollowUpSuggestions();
@@ -315,24 +348,84 @@ public class ChatAgentFragment extends Fragment {
     }
 
     private void handleSymptomMessage(String message, String userContext) {
-        // Use Gemini API to analyze symptoms
-        geminiApiService.analyzeSymptoms(message, userContext, new GeminiApiService.GeminiCallback() {
+        // Use Gemini API to triage symptoms
+        geminiApiService.triageSymptoms(message, new GeminiApiService.TriageCallback() {
             @Override
-            public void onSuccess(ChatMessage response) {
+            public void onSuccess(com.mit.bodhiq.data.model.TriageResponse response) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         hideTypingIndicator();
-                        addMessageToChat(response);
-                        
-                        // Add emergency guidance if needed
-                        if (response.getSeverity() == ChatMessage.Severity.HIGH || 
-                            response.getSeverity() == ChatMessage.Severity.CRITICAL) {
-                            addEmergencyGuidance();
+
+                        // Convert TriageResponse to ChatMessage for display
+                        ChatMessage chatMessage = new ChatMessage();
+                        chatMessage.setType(ChatMessage.MessageType.AI_RESPONSE);
+                        chatMessage.setFromUser(false);
+                        chatMessage.setTimestamp(System.currentTimeMillis());
+
+                        // Determine severity from urgency
+                        ChatMessage.Severity severity = ChatMessage.Severity.LOW;
+                        if (response.getTriage() != null && response.getTriage().getUrgency() != null) {
+                            String urgency = response.getTriage().getUrgency().toLowerCase();
+                            if (urgency.contains("emergency"))
+                                severity = ChatMessage.Severity.CRITICAL;
+                            else if (urgency.contains("urgent"))
+                                severity = ChatMessage.Severity.HIGH;
+                            else if (urgency.contains("routine"))
+                                severity = ChatMessage.Severity.MEDIUM;
                         }
-                        
-                        // Add follow-up suggestions
-                        if (response.isRequiresFollowUp()) {
-                            addFollowUpSuggestions();
+
+                        chatMessage.setSeverity(severity);
+
+                        // Build content from structured data
+                        StringBuilder content = new StringBuilder();
+
+                        // Urgency Header
+                        if (severity == ChatMessage.Severity.CRITICAL) {
+                            content.append("🚨 **EMERGENCY ALERT**\n\n");
+                        } else if (severity == ChatMessage.Severity.HIGH) {
+                            content.append("🔴 **High Priority**\n\n");
+                        }
+
+                        // Analysis/Reasons
+                        if (response.getTriage() != null && response.getTriage().getReasons() != null) {
+                            content.append("🧩 **Analysis**:\n");
+                            for (String reason : response.getTriage().getReasons()) {
+                                content.append("• ").append(reason).append("\n");
+                            }
+                            content.append("\n");
+                        }
+
+                        // Suggestions
+                        if (response.getSuggestions() != null) {
+                            if (response.getSuggestions().getImmediateActions() != null
+                                    && !response.getSuggestions().getImmediateActions().isEmpty()) {
+                                content.append("⚡ **Immediate Actions**:\n");
+                                for (String action : response.getSuggestions().getImmediateActions()) {
+                                    content.append("• ").append(action).append("\n");
+                                }
+                                content.append("\n");
+                            }
+
+                            if (response.getSuggestions().getRecommendedSpecialist() != null
+                                    && !response.getSuggestions().getRecommendedSpecialist().isEmpty()) {
+                                content.append("👨‍⚕️ **Consult**: ")
+                                        .append(response.getSuggestions().getRecommendedSpecialist()).append("\n\n");
+                            }
+                        }
+
+                        // Disclaimer
+                        if (response.getDisclaimer() != null) {
+                            content.append("⚠️ **Disclaimer**: ").append(response.getDisclaimer());
+                            chatMessage.setMedicalDisclaimer(response.getDisclaimer());
+                        }
+
+                        chatMessage.setContent(content.toString());
+
+                        addMessageToChat(chatMessage);
+
+                        // Add emergency guidance if needed
+                        if (severity == ChatMessage.Severity.HIGH || severity == ChatMessage.Severity.CRITICAL) {
+                            addEmergencyGuidance();
                         }
                     });
                 }
@@ -359,7 +452,7 @@ public class ChatAgentFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         hideTypingIndicator();
                         addMessageToChat(response);
-                        
+
                         // Add follow-up suggestions if needed
                         if (response.isRequiresFollowUp()) {
                             addFollowUpSuggestions();
@@ -380,8 +473,7 @@ public class ChatAgentFragment extends Fragment {
                         fallbackResponse.setSeverity(ChatMessage.Severity.LOW);
                         fallbackResponse.setContent(generateGeneralHealthResponse(message));
                         fallbackResponse.setMedicalDisclaimer(
-                            "This information is for educational purposes only. Consult your healthcare provider for personalized medical advice."
-                        );
+                                "This information is for educational purposes only. Consult your healthcare provider for personalized medical advice.");
                         addMessageToChat(fallbackResponse);
                     });
                 }
@@ -391,54 +483,54 @@ public class ChatAgentFragment extends Fragment {
 
     private String generateGeneralHealthResponse(String message) {
         String lowerMessage = message.toLowerCase();
-        
+
         if (lowerMessage.contains("diet") || lowerMessage.contains("nutrition")) {
             return "🥗 **Nutrition Guidance**\n\n" +
-                   "A balanced diet is crucial for optimal health:\n" +
-                   "• Include plenty of fruits and vegetables (5-9 servings daily)\n" +
-                   "• Choose whole grains over refined grains\n" +
-                   "• Include lean proteins (fish, poultry, legumes)\n" +
-                   "• Limit processed foods and added sugars\n" +
-                   "• Stay hydrated with 8-10 glasses of water daily\n\n" +
-                   "Consider consulting a registered dietitian for personalized nutrition advice.";
+                    "A balanced diet is crucial for optimal health:\n" +
+                    "• Include plenty of fruits and vegetables (5-9 servings daily)\n" +
+                    "• Choose whole grains over refined grains\n" +
+                    "• Include lean proteins (fish, poultry, legumes)\n" +
+                    "• Limit processed foods and added sugars\n" +
+                    "• Stay hydrated with 8-10 glasses of water daily\n\n" +
+                    "Consider consulting a registered dietitian for personalized nutrition advice.";
         }
-        
+
         if (lowerMessage.contains("exercise") || lowerMessage.contains("fitness")) {
             return "🏃‍♀️ **Exercise Recommendations**\n\n" +
-                   "Regular physical activity provides numerous health benefits:\n" +
-                   "• Aim for 150 minutes of moderate aerobic activity weekly\n" +
-                   "• Include strength training exercises 2+ days per week\n" +
-                   "• Start slowly and gradually increase intensity\n" +
-                   "• Choose activities you enjoy to maintain consistency\n" +
-                   "• Consider walking, swimming, cycling, or dancing\n\n" +
-                   "Consult your healthcare provider before starting a new exercise program.";
+                    "Regular physical activity provides numerous health benefits:\n" +
+                    "• Aim for 150 minutes of moderate aerobic activity weekly\n" +
+                    "• Include strength training exercises 2+ days per week\n" +
+                    "• Start slowly and gradually increase intensity\n" +
+                    "• Choose activities you enjoy to maintain consistency\n" +
+                    "• Consider walking, swimming, cycling, or dancing\n\n" +
+                    "Consult your healthcare provider before starting a new exercise program.";
         }
-        
+
         if (lowerMessage.contains("sleep") || lowerMessage.contains("insomnia")) {
             return "😴 **Sleep Health Tips**\n\n" +
-                   "Quality sleep is essential for overall health:\n" +
-                   "• Aim for 7-9 hours of sleep nightly\n" +
-                   "• Maintain a consistent sleep schedule\n" +
-                   "• Create a relaxing bedtime routine\n" +
-                   "• Keep your bedroom cool, dark, and quiet\n" +
-                   "• Limit screen time before bed\n" +
-                   "• Avoid caffeine and large meals before bedtime\n\n" +
-                   "If sleep problems persist, consult your healthcare provider.";
+                    "Quality sleep is essential for overall health:\n" +
+                    "• Aim for 7-9 hours of sleep nightly\n" +
+                    "• Maintain a consistent sleep schedule\n" +
+                    "• Create a relaxing bedtime routine\n" +
+                    "• Keep your bedroom cool, dark, and quiet\n" +
+                    "• Limit screen time before bed\n" +
+                    "• Avoid caffeine and large meals before bedtime\n\n" +
+                    "If sleep problems persist, consult your healthcare provider.";
         }
-        
+
         // Default response
         return "🤖 **Health Information**\n\n" +
-               "I'd be happy to help with your health question! For the most accurate and personalized guidance, " +
-               "I recommend:\n\n" +
-               "• Being more specific about your health concern\n" +
-               "• Sharing any relevant symptoms or medical history\n" +
-               "• Mentioning any specific health parameters you're curious about\n\n" +
-               "You can also ask me about:\n" +
-               "• Interpreting medical test results\n" +
-               "• Understanding symptoms\n" +
-               "• General health and wellness tips\n" +
-               "• When to seek medical attention\n\n" +
-               "What specific aspect of your health would you like to discuss?";
+                "I'd be happy to help with your health question! For the most accurate and personalized guidance, " +
+                "I recommend:\n\n" +
+                "• Being more specific about your health concern\n" +
+                "• Sharing any relevant symptoms or medical history\n" +
+                "• Mentioning any specific health parameters you're curious about\n\n" +
+                "You can also ask me about:\n" +
+                "• Interpreting medical test results\n" +
+                "• Understanding symptoms\n" +
+                "• General health and wellness tips\n" +
+                "• When to seek medical attention\n\n" +
+                "What specific aspect of your health would you like to discuss?";
     }
 
     private void addFollowUpSuggestions() {
@@ -446,15 +538,14 @@ public class ChatAgentFragment extends Fragment {
         followUp.setType(ChatMessage.MessageType.AI_RECOMMENDATION);
         followUp.setFromUser(false);
         followUp.setContent(
-            "📋 **Recommended Next Steps:**\n\n" +
-            "• Schedule an appointment with your healthcare provider\n" +
-            "• Keep a symptom diary to track changes\n" +
-            "• Monitor your vital signs if possible\n" +
-            "• Prepare questions for your doctor visit\n" +
-            "• Bring any relevant medical records or test results\n\n" +
-            "Would you like help preparing questions for your healthcare provider?"
-        );
-        
+                "📋 **Recommended Next Steps:**\n\n" +
+                        "• Schedule an appointment with your healthcare provider\n" +
+                        "• Keep a symptom diary to track changes\n" +
+                        "• Monitor your vital signs if possible\n" +
+                        "• Prepare questions for your doctor visit\n" +
+                        "• Bring any relevant medical records or test results\n\n" +
+                        "Would you like help preparing questions for your healthcare provider?");
+
         addMessageToChat(followUp);
     }
 
@@ -464,20 +555,19 @@ public class ChatAgentFragment extends Fragment {
         emergency.setFromUser(false);
         emergency.setSeverity(ChatMessage.Severity.CRITICAL);
         emergency.setContent(
-            "🚨 **IMPORTANT: Seek Immediate Medical Attention**\n\n" +
-            "Based on your symptoms, you should consider:\n" +
-            "• Calling emergency services (911) if symptoms are severe\n" +
-            "• Visiting the nearest emergency room\n" +
-            "• Contacting your healthcare provider immediately\n\n" +
-            "**Emergency Warning Signs:**\n" +
-            "• Difficulty breathing or shortness of breath\n" +
-            "• Chest pain or pressure\n" +
-            "• Severe abdominal pain\n" +
-            "• Sudden confusion or difficulty speaking\n" +
-            "• Loss of consciousness\n\n" +
-            "Don't delay seeking professional medical care."
-        );
-        
+                "🚨 **IMPORTANT: Seek Immediate Medical Attention**\n\n" +
+                        "Based on your symptoms, you should consider:\n" +
+                        "• Calling emergency services (911) if symptoms are severe\n" +
+                        "• Visiting the nearest emergency room\n" +
+                        "• Contacting your healthcare provider immediately\n\n" +
+                        "**Emergency Warning Signs:**\n" +
+                        "• Difficulty breathing or shortness of breath\n" +
+                        "• Chest pain or pressure\n" +
+                        "• Severe abdominal pain\n" +
+                        "• Sudden confusion or difficulty speaking\n" +
+                        "• Loss of consciousness\n\n" +
+                        "Don't delay seeking professional medical care.");
+
         addMessageToChat(emergency);
     }
 
@@ -486,7 +576,7 @@ public class ChatAgentFragment extends Fragment {
         typingMessage.setType(ChatMessage.MessageType.SYSTEM_INFO);
         typingMessage.setFromUser(false);
         typingMessage.setContent("🤖 Analyzing your message...");
-        
+
         addMessageToChat(typingMessage);
     }
 
@@ -494,8 +584,8 @@ public class ChatAgentFragment extends Fragment {
         // Remove the last message if it's a typing indicator
         if (!chatMessages.isEmpty()) {
             ChatMessage lastMessage = chatMessages.get(chatMessages.size() - 1);
-            if (lastMessage.getType() == ChatMessage.MessageType.SYSTEM_INFO && 
-                lastMessage.getContent().contains("Analyzing")) {
+            if (lastMessage.getType() == ChatMessage.MessageType.SYSTEM_INFO &&
+                    lastMessage.getContent().contains("Analyzing")) {
                 chatMessages.remove(chatMessages.size() - 1);
                 chatAdapter.notifyItemRemoved(chatMessages.size());
             }
@@ -506,7 +596,7 @@ public class ChatAgentFragment extends Fragment {
         chatMessages.add(message);
         chatAdapter.notifyItemInserted(chatMessages.size() - 1);
         binding.rvChatMessages.scrollToPosition(chatMessages.size() - 1);
-        
+
         // Hide empty state
         showEmptyState(false);
     }
@@ -516,10 +606,10 @@ public class ChatAgentFragment extends Fragment {
         errorMessage.setType(ChatMessage.MessageType.SYSTEM_INFO);
         errorMessage.setFromUser(false);
         errorMessage.setContent("❌ " + error);
-        
+
         addMessageToChat(errorMessage);
     }
-    
+
     private void showEmptyState(boolean show) {
         binding.layoutEmptyState.setVisibility(show ? View.VISIBLE : View.GONE);
         binding.rvChatMessages.setVisibility(show ? View.GONE : View.VISIBLE);

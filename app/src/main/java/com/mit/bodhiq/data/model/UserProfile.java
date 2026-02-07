@@ -19,14 +19,18 @@ public class UserProfile {
     private String height;
     private String weight;
     private String allergies;
-    private String emergencyContact;
+    @Deprecated
+    private String emergencyContact; // Deprecated - for backward compatibility only
+    private String emergencyContactName;
+    private String emergencyContactPhone;
     private String profileImageUrl;
     private String loginProvider;
     private long createdAt;
     private long updatedAt;
 
     // Default constructor required for Firestore
-    public UserProfile() {}
+    public UserProfile() {
+    }
 
     public UserProfile(String userId, String fullName, String email) {
         this.userId = userId;
@@ -37,56 +41,159 @@ public class UserProfile {
     }
 
     // Getters and Setters
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    public String getUserId() {
+        return userId;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public String getAge() { return age; }
-    public void setAge(String age) { this.age = age; }
+    public String getEmail() {
+        return email;
+    }
 
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public String getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
-    public String getBloodGroup() { return bloodGroup; }
-    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+    public String getAge() {
+        return age;
+    }
 
-    public String getHeight() { return height; }
-    public void setHeight(String height) { this.height = height; }
+    public void setAge(String age) {
+        this.age = age;
+    }
 
-    public String getWeight() { return weight; }
-    public void setWeight(String weight) { this.weight = weight; }
+    public String getGender() {
+        return gender;
+    }
 
-    public String getAllergies() { return allergies; }
-    public void setAllergies(String allergies) { this.allergies = allergies; }
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 
-    public String getEmergencyContact() { return emergencyContact; }
-    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
 
-    public String getProfileImageUrl() { return profileImageUrl; }
-    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
+    public void setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
 
-    public String getLoginProvider() { return loginProvider; }
-    public void setLoginProvider(String loginProvider) { this.loginProvider = loginProvider; }
+    public String getAddress() {
+        return address;
+    }
 
-    public long getCreatedAt() { return createdAt; }
-    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-    public long getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
+    public String getBloodGroup() {
+        return bloodGroup;
+    }
+
+    public void setBloodGroup(String bloodGroup) {
+        this.bloodGroup = bloodGroup;
+    }
+
+    public String getHeight() {
+        return height;
+    }
+
+    public void setHeight(String height) {
+        this.height = height;
+    }
+
+    public String getWeight() {
+        return weight;
+    }
+
+    public void setWeight(String weight) {
+        this.weight = weight;
+    }
+
+    public String getAllergies() {
+        return allergies;
+    }
+
+    public void setAllergies(String allergies) {
+        this.allergies = allergies;
+    }
+
+    @Deprecated
+    public String getEmergencyContact() {
+        return emergencyContact;
+    }
+
+    @Deprecated
+    public void setEmergencyContact(String emergencyContact) {
+        this.emergencyContact = emergencyContact;
+    }
+
+    public String getEmergencyContactName() {
+        return emergencyContactName;
+    }
+
+    public void setEmergencyContactName(String emergencyContactName) {
+        this.emergencyContactName = emergencyContactName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getLoginProvider() {
+        return loginProvider;
+    }
+
+    public void setLoginProvider(String loginProvider) {
+        this.loginProvider = loginProvider;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     /**
      * Convert to Map for Firestore
@@ -105,7 +212,9 @@ public class UserProfile {
         result.put("height", height);
         result.put("weight", weight);
         result.put("allergies", allergies);
-        result.put("emergencyContact", emergencyContact);
+        // Use new separate fields for emergency contact
+        result.put("emergencyContactName", emergencyContactName);
+        result.put("emergencyContactPhone", emergencyContactPhone);
         result.put("profileImageUrl", profileImageUrl);
         result.put("loginProvider", loginProvider);
         result.put("createdAt", createdAt);
@@ -114,7 +223,7 @@ public class UserProfile {
     }
 
     /**
-     * Create from Firestore Map
+     * Create from Firestore Map with backward compatibility migration
      */
     public static UserProfile fromMap(Map<String, Object> map) {
         UserProfile profile = new UserProfile();
@@ -130,17 +239,42 @@ public class UserProfile {
         profile.setHeight((String) map.get("height"));
         profile.setWeight((String) map.get("weight"));
         profile.setAllergies((String) map.get("allergies"));
-        profile.setEmergencyContact((String) map.get("emergencyContact"));
+
+        // Migration: Handle old single-field emergency contact for backward
+        // compatibility
+        if (map.containsKey("emergencyContact")) {
+            String oldContact = (String) map.get("emergencyContact");
+            if (oldContact != null && !oldContact.isEmpty()) {
+                // Try to parse as "Name: Phone" format
+                if (oldContact.contains(":")) {
+                    String[] parts = oldContact.split(":", 2);
+                    profile.setEmergencyContactName(parts[0].trim());
+                    profile.setEmergencyContactPhone(parts[1].trim());
+                } else {
+                    // Treat entire string as phone number
+                    profile.setEmergencyContactPhone(oldContact.trim());
+                }
+            }
+        }
+
+        // New format: separate name and phone fields (override migration if present)
+        if (map.containsKey("emergencyContactName")) {
+            profile.setEmergencyContactName((String) map.get("emergencyContactName"));
+        }
+        if (map.containsKey("emergencyContactPhone")) {
+            profile.setEmergencyContactPhone((String) map.get("emergencyContactPhone"));
+        }
+
         profile.setProfileImageUrl((String) map.get("profileImageUrl"));
         profile.setLoginProvider((String) map.get("loginProvider"));
-        
+
         if (map.get("createdAt") instanceof Long) {
             profile.setCreatedAt((Long) map.get("createdAt"));
         }
         if (map.get("updatedAt") instanceof Long) {
             profile.setUpdatedAt((Long) map.get("updatedAt"));
         }
-        
+
         return profile;
     }
 }

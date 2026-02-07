@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.mit.bodhiq.data.model.ChatMessage;
 import com.mit.bodhiq.data.model.UserProfile;
+import com.mit.bodhiq.utils.GeminiApiService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -334,35 +335,177 @@ public class ChatController {
     }
     
     private ChatMessage handleSymptomCheck(String userMessage) {
-        // Analyze symptoms
-        DocumentAnalyzer.SymptomAnalysis analysis = documentAnalyzer.analyzeSymptoms(userMessage, userProfile);
+        // Use Gemini API for intelligent triage instead of rule-based analysis
+        // This will be called asynchronously, so we return a placeholder
+        ChatMessage placeholder = createResponse(
+            "🩺 Analyzing your symptoms...\n\nPlease wait while I assess your condition.",
+            ChatMessage.MessageType.AI_RESPONSE,
+            ChatMessage.Severity.LOW
+        );
         
+        // Note: The actual implementation should use async callback
+        // For now, this maintains the synchronous interface
+        // The calling code should be updated to handle async responses
+        
+        return placeholder;
+    }
+    
+    /**
+     * Process symptom check with Gemini triage (async version)
+     */
+    public void processSymptomCheckAsync(String userMessage, SymptomCheckCallback callback) {
+        // Get patient context
+        String patientContext = buildPatientContext();
+        
+        // Get recent conversation context (last 3 messages)
+        String recentMessages = conversationContext.getRecentMessagesAsString(3);
+        
+        // Use GeminiApiService for triage
+        GeminiApiService geminiService = new GeminiApiService(context);
+        geminiService.triageSymptoms(userMessage, patientContext, recentMessages, 
+            new GeminiApiService.TriageCallback() {
+                @Override
+                public void onSuccess(com.mit.bodhiq.data.model.TriageResponse triageResponse) {
+                    ChatMessage message = convertTriageToMessage(triageResponse);
+                    callback.onSuccess(message);
+                }
+                
+                @Override
+                public void onError(String error) {
+                    ChatMessage errorMessage = createResponse(
+                        "I'm having trouble analyzing your symptoms right now. " +
+                        "If you're experiencing severe symptoms, please seek immediate medical attention.\n\n" +
+                        "Error: " + error,
+                        ChatMessage.MessageType.AI_RESPONSE,
+                        ChatMessage.Severity.MEDIUM
+                    );
+                    callback.onError(errorMessage);
+                }
+            });
+    }
+    
+    /**
+     * Build patient context string from profile
+     */
+    private String buildPatientContext() {
+        if (userProfile == null) {
+            return "";
+        }
+        
+        StringBuilder context = new StringBuilder();
+        if (userProfile.getAge() != null) {
+            context.append("Age: ").append(userProfile.getAge()).append(", ");
+        }
+        if (userProfile.getGender() != null) {
+            context.append("Gender: ").append(userProfile.getGender()).append(", ");
+        }
+        if (userProfile.getAllergies() != null && !userProfile.getAllergies().isEmpty()) {
+            context.append("Allergies: ").append(userProfile.getAllergies());
+        }
+        
+        return context.toString();
+    }
+    
+    /**
+     * Convert TriageResponse to ChatMessage
+     */
+    private ChatMessage convertTriageToMessage(com.mit.bodhiq.data.model.TriageResponse triage) {
         StringBuilder response = new StringBuilder();
-        response.append("🩺 **Symptom Assessment**\n\n");
+        response.append("🩺 **Symptom Triage Assessment**\n\n");
         
-        response.append("**Your Symptoms:**\n");
-        for (String symptom : analysis.getSymptoms()) {
-            response.append("• ").append(symptom).append("\n");
+        // Extracted symptoms
+        if (triage.getExtracted() != null && triage.getExtracted().getPresentingSymptoms() != null) {
+            response.append("**Your Symptoms:**\n");
+            for (String symptom : triage.getExtracted().getPresentingSymptoms()) {
+                response.append("• ").append(symptom).append("\n");
+            }
+            response.append("\n");
         }
-        response.append("\n");
         
-        response.append("**Assessment:**\n");
-        response.append(analysis.getAssessment()).append("\n\n");
-        
-        response.append("**Recommendations:**\n");
-        for (String rec : analysis.getRecommendations()) {
-            response.append("• ").append(rec).append("\n");
+        // Urgency and reasons
+        if (triage.getTriage() != null) {
+            String urgency = triage.getTriage().getUrgency();
+            response.append("**Urgency Level:** ").append(urgency.toUpperCase()).append("\n\n");
+            
+            if (triage.getTriage().getReasons() != null && !triage.getTriage().getReasons().isEmpty()) {
+                response.append("**Assessment:**\n");
+                for (String reason : triage.getTriage().getReasons()) {
+                    response.append("• ").append(reason).append("\n");
+                }
+                response.append("\n");
+            }
         }
+        
+        // Suggestions
+        if (triage.getSuggestions() != null) {
+            if (triage.getSuggestions().getImmediateActions() != null && 
+                !triage.getSuggestions().getImmediateActions().isEmpty()) {
+                response.append("**Recommended Actions:**\n");
+                for (String action : triage.getSuggestions().getImmediateActions()) {
+                    response.append("• ").append(action).append("\n");
+                }
+                response.append("\n");
+            }
+            
+            if (triage.getSuggestions().getRedFlagWording() != null && 
+                !triage.getSuggestions().getRedFlagWording().isEmpty()) {
+                response.append("⚠️ **").append(triage.getSuggestions().getRedFlagWording()).append("**\n\n");
+            }
+            
+            if (triage.getSuggestions().getRecommendedSpecialist() != null) {
+                response.append("**Recommended Specialist:** ")
+                    .append(triage.getSuggestions().getRecommendedSpecialist()).append("\n\n");
+            }
+        }
+        
+        // Map urgency to severity
+        ChatMessage.Severity severity = mapUrgencyToSeverity(
+            triage.getTriage() != null ? triage.getTriage().getUrgency() : "routine"
+        );
         
         ChatMessage message = createResponse(
             response.toString(),
             ChatMessage.MessageType.AI_RESPONSE,
-            analysis.getSeverity()
+            severity
         );
         
-        message.setRequiresFollowUp(analysis.requiresFollowUp());
+        // Set follow-up requirement based on urgency
+        message.setRequiresFollowUp(
+            severity == ChatMessage.Severity.HIGH || severity == ChatMessage.Severity.CRITICAL
+        );
+        
+        // Add disclaimer
+        if (triage.getDisclaimer() != null) {
+            message.setMedicalDisclaimer(triage.getDisclaimer());
+        }
         
         return message;
+    }
+    
+    /**
+     * Map triage urgency to message severity
+     */
+    private ChatMessage.Severity mapUrgencyToSeverity(String urgency) {
+        switch (urgency.toLowerCase()) {
+            case "emergency":
+                return ChatMessage.Severity.CRITICAL;
+            case "urgent":
+                return ChatMessage.Severity.HIGH;
+            case "routine":
+                return ChatMessage.Severity.MEDIUM;
+            case "selfcare":
+                return ChatMessage.Severity.LOW;
+            default:
+                return ChatMessage.Severity.MEDIUM;
+        }
+    }
+    
+    /**
+     * Callback interface for async symptom check
+     */
+    public interface SymptomCheckCallback {
+        void onSuccess(ChatMessage message);
+        void onError(ChatMessage errorMessage);
     }
     
     private ChatMessage handleMedicationInfo(String userMessage) {
