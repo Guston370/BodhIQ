@@ -11,10 +11,10 @@
         android:fillColor="@android:color/black"
         android:pathData="
             M4,7
-            H7.5
-            L9,5
-            H15
-            L16.5,7
+            H8.5
+            L10,5
+            H14
+            L15.5,7
             H20
             C21.1,7 22,7.9 22,9
             V18
@@ -25,35 +25,27 @@
             C2,7.9 2.9,7 4,7
             Z"/>
 
-    <!-- Flash indicator -->
+    <!-- Lens outer outline -->
     <path
-        android:fillColor="@android:color/black"
-        android:pathData="
-            M6.5,9
-            A0.8,0.8 0 1,1 6.499,9
-            Z"/>
-
-    <!-- Outer lens ring -->
-    <path
-        android:fillColor="@android:color/black"
+        android:fillColor="@android:color/white"
         android:pathData="
             M12,9
-            A4.5,4.5 0 1,1 11.999,9
+            A4.6,4.6 0 1,1 11.999,9
             Z"/>
 
-    <!-- Middle lens ring -->
+    <!-- Lens inner outline -->
     <path
         android:fillColor="@android:color/black"
         android:pathData="
-            M12,10.5
-            A3,3 0 1,1 11.999,10.5
+            M12,10.6
+            A3,3 0 1,1 11.999,10.6
             Z"/>
 
-    <!-- Inner lens -->
+    <!-- Lens core -->
     <path
-        android:fillColor="@android:color/black"
+        android:fillColor="@android:color/white"
         android:pathData="
             M12,12
-            A1.5,1.5 0 1,1 11.999,12
+            A1.4,1.4 0 1,1 11.999,12
             Z"/>
 </vector>
