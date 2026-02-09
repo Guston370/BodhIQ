@@ -2,6 +2,8 @@
     <string name="app_name">BodhIQ</string>
     
     <!-- Login Activity Strings -->
+    <!-- Login Activity Strings -->
+
     <string name="app_logo">BodhIQ Logo</string>
     <string name="login_subtitle">Pharmaceutical Research Analysis Platform</string>
     <string name="login_title">Sign In</string>
